@@ -69,6 +69,11 @@ def get_word_idx(context, wordss, idx):
 
 
 def process_tokens(temp_tokens):
+    '''
+    针对一些特殊符号，将temp_tokens中没有分开的词组进一步分隔开
+    :param temp_tokens: [xxx,...]
+    :return: 
+    '''
     tokens = []
     for token in temp_tokens:
         flag = False
@@ -76,6 +81,7 @@ def process_tokens(temp_tokens):
         # \u2013 is en-dash. Used for number to nubmer
         # l = ("-", "\u2212", "\u2014", "\u2013")
         # l = ("\u2013",)
+        # 正则表达式：'([-−—–/~"\'“’”‘°])'，使用上面的正则表达式进行分割
         tokens.extend(re.split("([{}])".format("".join(l)), token))
     return tokens
 

@@ -107,6 +107,45 @@ def get_word2vec(args, word_counter):
 
 
 def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="default", in_path=None):
+    '''
+    squad的数据是如下组织的：
+    {
+        'data':
+            [
+                {（某一篇文章）
+                    'paragraphs':
+                        [
+                            {（文章中的某个段落）
+                                'context':
+                                'qas':
+                                    [
+                                        {（针对这个段落提出的某个问题）
+                                            'id':
+                                            'question':                                    
+                                            'answers':
+                                                [（针对某个问题一共有3个备选答案）
+                                                    {（针对某个问题给出的备选答案）
+                                                        'answer_start':（从段落中的第几个字符开始是答案）
+                                                        'text':
+                                                    }
+                                                ]
+                                        },...
+                                    ]
+                            },...
+                        ]
+                    'title':
+                },...
+            ]
+        'version':
+    }
+    :param args: 
+    :param data_type: 
+    :param start_ratio: 
+    :param stop_ratio: 
+    :param out_name: 
+    :param in_path: 
+    :return: 
+    '''
     if args.tokenizer == "PTB":
         import nltk
         sent_tokenize = nltk.sent_tokenize
@@ -133,7 +172,9 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     answerss = []
     p = []
     word_counter, char_counter, lower_word_counter = Counter(), Counter(), Counter()
+    # 第几篇passage开始
     start_ai = int(round(len(source_data['data']) * start_ratio))
+    # 第几篇passage结束
     stop_ai = int(round(len(source_data['data']) * stop_ratio))
     for ai, article in enumerate(tqdm(source_data['data'][start_ai:stop_ai])):
         xp, cxp = [], []
@@ -146,9 +187,18 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
             context = para['context']
             context = context.replace("''", '" ')
             context = context.replace("``", '" ')
+            # 首先将context分句，然后对每一句分词，结果如下：
+            # [（每一句）
+            #   [（每一句中的每一个词）
+            #       xxx,xxx,xxx,xxx
+            #   ],...
+            # ]
             xi = list(map(word_tokenize, sent_tokenize(context)))
             xi = [process_tokens(tokens) for tokens in xi]  # process tokens
             # given xi, add chars
+            # xij是每一句话中的词的list
+            # xijk是指的每一个词
+            # list(xijk)将str转换成了list，它是一个字符的list，每个list表示一个词
             cxi = [[list(xijk) for xijk in xij] for xij in xi]
             xp.append(xi)
             cxp.append(cxi)
