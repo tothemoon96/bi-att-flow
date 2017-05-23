@@ -176,18 +176,25 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     start_ai = int(round(len(source_data['data']) * start_ratio))
     # 第几篇passage结束
     stop_ai = int(round(len(source_data['data']) * stop_ratio))
+    # 对每一篇文章
     for ai, article in enumerate(tqdm(source_data['data'][start_ai:stop_ai])):
+        # xp存储对应于每一个段落的xi
+        # cxp存储对应于每一个段落的cxi
         xp, cxp = [], []
         pp = []
+        # x存储对应于每一篇文章的xp
+        # cx存储对应于每一篇文章的cxp
+        # p存储对应于每一篇文章的pp
         x.append(xp)
         cx.append(cxp)
         p.append(pp)
+        # 对每一个段落
         for pi, para in enumerate(article['paragraphs']):
             # wordss
             context = para['context']
             context = context.replace("''", '" ')
             context = context.replace("``", '" ')
-            # 首先将context分句，然后对每一句分词，结果如下：
+            # 首先将context分句，然后对每一句分词，xi的结构如下：
             # [（每一句）
             #   [（每一句中的每一个词）
             #       xxx,xxx,xxx,xxx
@@ -199,13 +206,17 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
             # xij是每一句话中的词的list
             # xijk是指的每一个词
             # list(xijk)将str转换成了list，它是一个字符的list，每个list表示一个词
+            # cxi和xi结构类似，只是每一个词用list表示而不是str表示
             cxi = [[list(xijk) for xijk in xij] for xij in xi]
             xp.append(xi)
             cxp.append(cxi)
+            # pp存储对应每一篇文章的原始的context
             pp.append(context)
 
             for xij in xi:
                 for xijk in xij:
+                    # xijk是指的每一个词
+                    # len(para['qas']表示的是一篇文章有多少个问题
                     word_counter[xijk] += len(para['qas'])
                     lower_word_counter[xijk.lower()] += len(para['qas'])
                     for xijkl in xijk:
@@ -214,14 +225,19 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
             rxi = [ai, pi]
             assert len(x) - 1 == ai
             assert len(x[ai]) - 1 == pi
+            # 对于每个问题
             for qa in para['qas']:
                 # get words
+                # qi表示问题中各个词组成的list
                 qi = word_tokenize(qa['question'])
                 qi = process_tokens(qi)
+                # 和qi类似，每个词用str表示
                 cqi = [list(qij) for qij in qi]
                 yi = []
                 cyi = []
+                # 存储问题的答案的list，每个元素都是备选答案
                 answers = []
+                # 对于某个问题的每一个答案
                 for answer in qa['answers']:
                     answer_text = answer['text']
                     answers.append(answer_text)

@@ -3,11 +3,25 @@ import numpy as np
 
 
 def get_2d_spans(text, tokenss):
+    '''
+    返回tokenss中每个词在text中出现的位置
+    :param text: str表示的原文本
+    :param tokenss: 分句和分词的嵌套list
+    :return: list(list(tuple))
+    [（每一个分句）
+        [（分句里每一个词）
+            (起始位置，结束位置)
+        ]
+    ]
+    '''
     spanss = []
     cur_idx = 0
+    # 对于每一个分句
     for tokens in tokenss:
         spans = []
+        # 对于每个词
         for token in tokens:
+            # 在text中没有发现某个token
             if text.find(token, cur_idx) < 0:
                 print(tokens)
                 print("{} {} {}".format(token, cur_idx, text))
@@ -20,10 +34,23 @@ def get_2d_spans(text, tokenss):
 
 
 def get_word_span(context, wordss, start, stop):
+    '''
+    在context中寻找start,stop指示的范围中，wordss中哪些词被包含在内
+    :param context: 一个字符串 
+    :param wordss: 分句和分词的嵌套list
+    :param start: 起始的index
+    :param stop: 终止的index
+    :return:被包含词在wordss中的索引，左闭右开，是一个切片 
+    ((句号，起始词索引)，(句号，终止词索引+1))
+    '''
     spanss = get_2d_spans(context, wordss)
     idxs = []
+    # 对每一个分句
     for sent_idx, spans in enumerate(spanss):
+        # 每一个分句里的每一个词
         for word_idx, span in enumerate(spans):
+            # 如果span和(start,stop)有所重叠，也就是说某个词在答案的范围之内
+            # 将某个词所属的句子的index和词的index翻入idxs中
             if not (stop <= span[0] or start >= span[1]):
                 idxs.append((sent_idx, word_idx))
 
