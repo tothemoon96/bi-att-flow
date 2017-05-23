@@ -10,7 +10,7 @@ def get_2d_spans(text, tokenss):
     :return: list(list(tuple))
     [（每一个分句）
         [（分句里每一个词）
-            (起始位置，结束位置)
+            (起始位置，结束位置)（左闭右开，是一个切片）
         ]
     ]
     '''
@@ -91,6 +91,13 @@ def get_flat_idx(wordss, idx):
 
 
 def get_word_idx(context, wordss, idx):
+    '''
+    返回idx表示的某个词在context中的起始位置
+    :param context: 一个字符串 
+    :param wordss: 分句和分词的嵌套list
+    :param idx: (句号索引，词号索引)
+    :return: 在context中的位置的索引
+    '''
     spanss = get_2d_spans(context, wordss)
     return spanss[idx[0]][idx[1]][0]
 

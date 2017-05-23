@@ -216,7 +216,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
             for xij in xi:
                 for xijk in xij:
                     # xijk是指的每一个词
-                    # len(para['qas']表示的是一篇文章有多少个问题
+                    # len(para['qas']表示的是一个段落有多少个问题
                     word_counter[xijk] += len(para['qas'])
                     lower_word_counter[xijk.lower()] += len(para['qas'])
                     for xijkl in xijk:
@@ -244,16 +244,25 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
                     answer_start = answer['answer_start']
                     answer_stop = answer_start + len(answer_text)
                     # TODO : put some function that gives word_start, word_stop here
+                    # yi0表示答案起始位置的词的索引
+                    # yi1表示答案终止位置的词的索引+1
                     yi0, yi1 = get_word_span(context, xi, answer_start, answer_stop)
                     # yi0 = answer['answer_word_start'] or [0, 0]
                     # yi1 = answer['answer_word_stop'] or [0, 1]
                     assert len(xi[yi0[0]]) > yi0[1]
                     assert len(xi[yi1[0]]) >= yi1[1]
+                    # w0答案起始位置的词
                     w0 = xi[yi0[0]][yi0[1]]
+                    # w1答案终止位置的词
                     w1 = xi[yi1[0]][yi1[1]-1]
+                    # 起始位置的词的开始位置在context中的索引
                     i0 = get_word_idx(context, xi, yi0)
+                    # 终止位置的词的开始位置在context中的索引
                     i1 = get_word_idx(context, xi, (yi1[0], yi1[1]-1))
+                    # 真实答案相对于起始位置词的偏移量，可以看做是索引
                     cyi0 = answer_start - i0
+                    # 真实答案相对于终止位置词的偏移量，可以看做是索引
+                    # 多减一个1是应为answer_stop指向的位置是真实答案结束位置的索引加1
                     cyi1 = answer_stop - i1 - 1
                     # print(answer_text, w0[cyi0:], w1[:cyi1+1])
                     assert answer_text[0] == w0[cyi0], (answer_text, w0, cyi0)
@@ -264,6 +273,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
                     yi.append([yi0, yi1])
                     cyi.append([cyi0, cyi1])
 
+                # 检查某个问题是不是没有答案
                 if len(qa['answers']) == 0:
                     yi.append([(0, 0), (0, 1)])
                     cyi.append([0, 1])
@@ -277,14 +287,50 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
                     for qijk in qij:
                         char_counter[qijk] += 1
 
+                # [（每个问题）
+                #   [（问题中的各个词的str）]
+                # ]
                 q.append(qi)
+                # [（每个问题）
+                #   [（问题中的各个词的list）]
+                # ]
                 cq.append(cqi)
+                # [（每个问题）
+                #   [（每个备选答案）
+                #       [（句号，词号），（句号，词号）]
+                #   ]
+                # ]
                 y.append(yi)
+                # [（每个问题）
+                #   [（每个备选答案）
+                #       [
+                #           真实答案起始位置对应的起始词内索引,
+                #           真实答案结束位置对应的起始词内索引
+                #       ]
+                #   ]
+                # ]
                 cy.append(cyi)
+                # [（每个问题）
+                #   [文章号索引，段落号索引]
+                # ]
                 rx.append(rxi)
+                # [（每个问题）
+                #   [文章号索引，段落号索引]
+                # ]
                 rcx.append(rxi)
+                # [（每个问题）
+                #   问题的id号
+                # ]
                 ids.append(qa['id'])
+                # [（每个问题）
+                #   处理的第几个问题的索引
+                # ]
                 idxs.append(len(idxs))
+                # [（每个问题）
+                #   [（每个备选答案）
+                #       真实答案原文
+                #   ]
+                # ]
                 answerss.append(answers)
 
         if args.debug:
