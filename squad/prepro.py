@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 from squad.utils import get_word_span, get_word_idx, process_tokens
 
+import logging
+logging.basicConfig(level=logging.INFO)
 
 def main():
     args = get_args()
@@ -84,17 +86,30 @@ def save(args, data, shared, data_type):
 
 
 def get_word2vec(args, word_counter):
+    '''
+    将word_counter中存在的词转换了glove词嵌入，如果glove词嵌入中不存在某个词，那么不做处理
+    :param args: 
+    :param word_counter:Counter对象 
+    :return: 字典{词:词向量的list}
+    '''
+    # 默认是100维的词向量
     glove_path = os.path.join(args.glove_dir, "glove.{}.{}d.txt".format(args.glove_corpus, args.glove_vec_size))
+    # 文件的行数
     sizes = {'6B': int(4e5), '42B': int(1.9e6), '840B': int(2.2e6), '2B': int(1.2e6)}
     total = sizes[args.glove_corpus]
     word2vec_dict = {}
+    # 文件的格式如下
+    # example 0d 1d 2d ...
     with open(glove_path, 'r', encoding='utf-8') as fh:
         for line in tqdm(fh, total=total):
             array = line.lstrip().rstrip().split(" ")
+            # 起始位置是词
             word = array[0]
+            # 剩下的位置的数据是词嵌入
             vector = list(map(float, array[1:]))
             if word in word_counter:
                 word2vec_dict[word] = vector
+            # 将字符串的第一个字符转换为大写
             elif word.capitalize() in word_counter:
                 word2vec_dict[word.capitalize()] = vector
             elif word.lower() in word_counter:
@@ -108,7 +123,7 @@ def get_word2vec(args, word_counter):
 
 def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="default", in_path=None):
     '''
-    squad的数据是如下组织的：
+    squad的数据集是如下组织的：
     {
         'data':
             [
@@ -217,6 +232,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
                 for xijk in xij:
                     # xijk是指的每一个词
                     # len(para['qas']表示的是一个段落有多少个问题
+                    # todo:不知道这里的计数是什么意思
                     word_counter[xijk] += len(para['qas'])
                     lower_word_counter[xijk.lower()] += len(para['qas'])
                     for xijkl in xijk:
@@ -280,7 +296,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
                     na.append(True)
                 else:
                     na.append(False)
-
+                # todo:不知道这里的计数是什么意思
                 for qij in qi:
                     word_counter[qij] += 1
                     lower_word_counter[qij.lower()] += 1
