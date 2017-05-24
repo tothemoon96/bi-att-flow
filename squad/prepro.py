@@ -11,7 +11,10 @@ from tqdm import tqdm
 from squad.utils import get_word_span, get_word_idx, process_tokens
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s:%(asctime)s:%(message)s'
+)
 
 def main():
     args = get_args()
@@ -79,8 +82,18 @@ def prepro(args):
 
 
 def save(args, data, shared, data_type):
+    '''
+    将处理后的数据存储成json
+    :param args: 
+    :param data: 
+    :param shared: 
+    :param data_type: 
+    :return: 
+    '''
     data_path = os.path.join(args.target_dir, "data_{}.json".format(data_type))
     shared_path = os.path.join(args.target_dir, "shared_{}.json".format(data_type))
+    logging.info('data:{}'.format(data_path))
+    logging.info('shared:{}'.format(shared_path))
     json.dump(data, open(data_path, 'w'))
     json.dump(shared, open(shared_path, 'w'))
 
@@ -123,7 +136,8 @@ def get_word2vec(args, word_counter):
 
 def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="default", in_path=None):
     '''
-    squad的数据集是如下组织的：
+    将squad数据集train或者dev处理成模型期待的格式
+    squad的数据结构是如下组织的：
     {
         'data':
             [
