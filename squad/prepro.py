@@ -370,8 +370,124 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     lower_word2vec_dict = get_word2vec(args, lower_word_counter)
 
     # add context here
+    # q:
+    # [（每个问题）
+    #   [（问题中的各个词的str）]
+    # ]
+
+    # cq:
+    # [（每个问题）
+    #   [（问题中的各个词的list）]
+    # ]
+
+    # y:
+    # [（每个问题）
+    #   [（每个备选答案）
+    #       [（句号，词号），（句号，词号）]
+    #   ]
+    # ]
+
+    # *x:
+    # [（每个问题）
+    #   [文章号索引，段落号索引]
+    # ]
+
+    # *cx:
+    # [（每个问题）
+    #   [文章号索引，段落号索引]
+    # ]
+
+    # cy:
+    # [（每个问题）
+    #   [（每个备选答案）
+    #       [
+    #           真实答案起始位置对应的起始词内索引,
+    #           真实答案结束位置对应的起始词内索引
+    #       ]
+    #   ]
+    # ]
+
+    # idxs:
+    # [（每个问题）
+    #   处理的第几个问题的索引
+    # ]
+
+    # ids:
+    # [（每个问题）
+    #   问题的id号
+    # ]
+
+    # answerss:
+    # [（每个问题）
+    #   [（每个备选答案）
+    #       真实答案原文
+    #   ]
+    # ]
+
+    # *p:
+    # [（每个问题）
+    #   [文章号索引，段落号索引]
+    # ]
+
+    # na:
+    # [（每个问题）
+    #   问题的是否存在答案（True，False）
+    # ]
     data = {'q': q, 'cq': cq, 'y': y, '*x': rx, '*cx': rcx, 'cy': cy,
             'idxs': idxs, 'ids': ids, 'answerss': answerss, '*p': rx, 'na': na}
+    # x:
+    # [（每一篇文章）
+    # 	[（每一个段落）
+    # 		[（每一句）
+    # 		  [（每一句中的每一个词用str表示）
+    # 		      xxx,xxx,xxx,xxx
+    # 		  ],...
+    # 		]
+    # 	]
+    # ]
+
+    # cx:
+    # [（每一篇文章）
+    # 	[（每一个段落）
+    # 		[（每一句）
+    # 		  [（每一句中的每一个词用list表示）
+    # 		      xxx,xxx,xxx,xxx
+    # 		  ],...
+    # 		]
+    # 	]
+    # ]
+
+    # p:
+    # [（每一篇文章）
+    # 	[（每一个段落）
+    # 		每一个段落的原始文本str
+    # 	]
+    # ]
+
+    # word_counter:
+    # {（所有的(段落，问题)数据对中，某个词的出现次数）
+    # 	str:int
+    # }
+
+    # char_counter:
+    # {（所有的(段落，问题)数据对中，某个字母的出现次数）
+    # 	str:int
+    # }
+
+    # lower_word_counter:
+    # {（所有的(段落，问题)数据对中，某个词的小写形式的出现次数）
+    # 	str:int
+    # }
+
+    # word2vec:
+    # {
+    #   词:词向量的list（str:list）
+    # }
+
+    # lower_word2vec:
+    # {
+    #   词:词的小写形式的词向量的list（str:list）
+    # }
     shared = {'x': x, 'cx': cx, 'p': p,
               'word_counter': word_counter, 'char_counter': char_counter, 'lower_word_counter': lower_word_counter,
               'word2vec': word2vec_dict, 'lower_word2vec': lower_word2vec_dict}
