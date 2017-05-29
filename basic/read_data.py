@@ -43,7 +43,9 @@ class DataSet(object):
         self.data = data  # e.g. {'X': [0, 1, 2], 'Y': [2, 3, 4]}
         self.data_type = data_type
         self.shared = shared
+        # 一共有多少个问题
         total_num_examples = self.get_data_size()
+        # 返回哪些问题是有效的训练样本，它是有效训练样本索引的列表
         self.valid_idxs = range(total_num_examples) if valid_idxs is None else valid_idxs
         self.num_examples = len(self.valid_idxs)
 
@@ -156,6 +158,15 @@ def load_metadata(config, data_type):
 
 
 def read_data(config, data_type, ref, data_filter=None):
+    '''
+
+    :param config:
+    :param data_type:'train','dev','test'
+    :param ref:
+    :param data_filter:
+    :return:
+    '''
+    # 这里的操作在过滤每个样本点
     data_path = os.path.join(config.data_dir, "data_{}.json".format(data_type))
     shared_path = os.path.join(config.data_dir, "shared_{}.json".format(data_type))
     with open(data_path, 'r') as fh:
@@ -163,6 +174,7 @@ def read_data(config, data_type, ref, data_filter=None):
     with open(shared_path, 'r') as fh:
         shared = json.load(fh)
 
+    # 获取一共有多少个问题
     num_examples = len(next(iter(data.values())))
     if data_filter is None:
         valid_idxs = range(num_examples)
@@ -171,29 +183,39 @@ def read_data(config, data_type, ref, data_filter=None):
         keys = data.keys()
         values = data.values()
         for vals in zip(*values):
+            # data字典中每一个数据点
             each = {key: val for key, val in zip(keys, vals)}
             mask.append(data_filter(each, shared))
         valid_idxs = [idx for idx in range(len(mask)) if mask[idx]]
 
     print("Loaded {}/{} examples from {}".format(len(valid_idxs), num_examples, data_type))
 
+    # 下面的操作主要是在处理词汇表
     shared_path = config.shared_path or os.path.join(config.out_dir, "shared.json")
+    # 是否载入之前处理的token结果
     if not ref:
         word2vec_dict = shared['lower_word2vec'] if config.lower_word else shared['word2vec']
         word_counter = shared['lower_word_counter'] if config.lower_word else shared['word_counter']
         char_counter = shared['char_counter']
+
+        # idx偏移两个位置是为了表示NULL和UNK
         if config.finetune:
+            # 下面的操作把每个词用token来表示
             shared['word2idx'] = {word: idx + 2 for idx, word in
                                   enumerate(word for word, count in word_counter.items()
+                                            # 高于某个词频 or （使用glove and 在glove中出现过）
                                             if count > config.word_count_th or (config.known_if_glove and word in word2vec_dict))}
         else:
-            assert config.known_if_glove
-            assert config.use_glove_for_unk
+            # 下面的操作把word2vec_dict不存在的词用token来表示
+            assert config.known_if_glove # True
+            assert config.use_glove_for_unk # True
             shared['word2idx'] = {word: idx + 2 for idx, word in
                                   enumerate(word for word, count in word_counter.items()
+                                            # 高于某个词频 or 没有在glove中出现过
                                             if count > config.word_count_th and word not in word2vec_dict)}
         shared['char2idx'] = {char: idx + 2 for idx, char in
                               enumerate(char for char, count in char_counter.items()
+                                        # 高于某个字符频
                                         if count > config.char_count_th)}
         NULL = "-NULL-"
         UNK = "-UNK-"
@@ -207,14 +229,20 @@ def read_data(config, data_type, ref, data_filter=None):
         for key, val in new_shared.items():
             shared[key] = val
 
+    # 构造token到word vector的矩阵
     if config.use_glove_for_unk:
         # create new word2idx and word2vec
         word2vec_dict = shared['lower_word2vec'] if config.lower_word else shared['word2vec']
+        # 如果某个词没有在shared['word2idx']中出现过
+        # todo:这个new_word2idx_dict出现的token似乎是不用被训练的token的embedding
         new_word2idx_dict = {word: idx for idx, word in enumerate(word for word in word2vec_dict.keys() if word not in shared['word2idx'])}
         shared['new_word2idx'] = new_word2idx_dict
+        # 这个没用
         offset = len(shared['word2idx'])
+        # 下面这两句似乎也没用
         word2vec_dict = shared['lower_word2vec'] if config.lower_word else shared['word2vec']
         new_word2idx_dict = shared['new_word2idx']
+        # 构造{token:word vector}字典
         idx2vec_dict = {idx: word2vec_dict[word] for word, idx in new_word2idx_dict.items()}
         # print("{}/{} unique words have corresponding glove vectors.".format(len(idx2vec_dict), len(word2idx_dict)))
         new_emb_mat = np.array([idx2vec_dict[idx] for idx in range(len(idx2vec_dict))], dtype='float32')
@@ -226,34 +254,48 @@ def read_data(config, data_type, ref, data_filter=None):
 
 def get_squad_data_filter(config):
     def data_filter(data_point, shared):
+        '''
+        数据点的过滤器
+        :param data_point: 对应于某个问题的数据点
+        :param shared:
+        :return:
+        '''
         assert shared is not None
         rx, rcx, q, cq, y = (data_point[key] for key in ('*x', '*cx', 'q', 'cq', 'y'))
         x, cx = shared['x'], shared['cx']
+        # 如果某个问题的词的数目超过了限制大小，这个数据点被过滤掉
         if len(q) > config.ques_size_th:
             return False
 
         # x filter
         xi = x[rx[0]][rx[1]]
         if config.squash:
+            # 对其中每个备选答案的起始终止位置
             for start, stop in y:
+                # 在答案结束位置之前的句子一共有多少个词
                 stop_offset = sum(map(len, xi[:stop[0]]))
+                # stop_offset:从段落开始到答案结束位置一共有多少个词
+                # 如果超过了限制大小，这个数据点被过滤掉
                 if stop_offset + stop[1] > config.para_size_th:
                     return False
             return True
 
+        # 如果问题的答案没有限制在一个句子之中，那么这个数据点被过滤掉
         if config.single:
+            # 对其中每个备选答案的起始终止位置
             for start, stop in y:
                 if start[0] != stop[0]:
                     return False
 
         if config.data_filter == 'max':
             for start, stop in y:
-                    if stop[0] >= config.num_sents_th:
-                        return False
-                    if start[0] != stop[0]:
-                        return False
-                    if stop[1] >= config.sent_size_th:
-                        return False
+                if stop[0] >= config.num_sents_th:
+                    return False
+                # 如果问题的答案没有限制在一个句子之中，那么这个数据点被过滤掉
+                if start[0] != stop[0]:
+                    return False
+                if stop[1] >= config.sent_size_th:
+                    return False
         elif config.data_filter == 'valid':
             if len(xi) > config.num_sents_th:
                 return False

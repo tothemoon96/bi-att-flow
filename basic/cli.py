@@ -103,7 +103,7 @@ flags.DEFINE_bool("dynamic_att", False, "Dynamic attention [False]")
 
 def main(_):
     config = flags.FLAGS
-
+    # out/basic/00
     config.out_dir = os.path.join(config.out_base_dir, config.model_name, str(config.run_id).zfill(2))
 
     m(config)
