@@ -27,6 +27,7 @@ def get_args():
     source_dir = os.path.join(home, "data", "squad")
     target_dir = "data/squad"
     glove_dir = os.path.join(home, "data", "glove")
+    # 这个action只有在存在某个参数命令的时候，如--xxx，才会自己设置默认值，否则为False
     parser.add_argument('-s', "--source_dir", default=source_dir)
     parser.add_argument('-t', "--target_dir", default=target_dir)
     parser.add_argument("--train_name", default='train-v1.1.json')
@@ -188,6 +189,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     else:
         raise Exception()
 
+    # 如果不进行分句
     if not args.split:
         sent_tokenize = lambda para: [para]
 

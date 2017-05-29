@@ -233,7 +233,7 @@ def read_data(config, data_type, ref, data_filter=None):
     if config.use_glove_for_unk:
         # create new word2idx and word2vec
         word2vec_dict = shared['lower_word2vec'] if config.lower_word else shared['word2vec']
-        # 如果某个词没有在shared['word2idx']中出现过
+        # 如果某个词没有在shared['word2idx']中出现过，就把它放进shared['new_word2idx']
         # todo:这个new_word2idx_dict出现的token似乎是不用被训练的token的embedding
         new_word2idx_dict = {word: idx for idx, word in enumerate(word for word in word2vec_dict.keys() if word not in shared['word2idx'])}
         shared['new_word2idx'] = new_word2idx_dict
@@ -328,13 +328,24 @@ def update_config(config, data_sets):
     for data_set in data_sets:
         data = data_set.data
         shared = data_set.shared
+        # 对于每个有效的样本点，也就是每个问题
         for idx in data_set.valid_idxs:
-            rx = data['*x'][idx]
-            q = data['q'][idx]
+            rx = data['*x'][idx] # [文章号索引，段落号索引]
+            q = data['q'][idx] # [（问题中的各个词的str）]
+            # sents:
+            # [（每一句）
+            #   [（每一句中的每一个词用str表示）
+            #       xxx,xxx,xxx,xxx
+            #   ],...
+            # ]
             sents = shared['x'][rx[0]][rx[1]]
+            # 每一段最多有多少个词
             config.max_para_size = max(config.max_para_size, sum(map(len, sents)))
+            # 每一段最多有多少个句子
             config.max_num_sents = max(config.max_num_sents, len(sents))
+            # 每一句最长有多少个词
             config.max_sent_size = max(config.max_sent_size, max(map(len, sents)))
+            # 每个词最多包含多少个单词
             config.max_word_size = max(config.max_word_size, max(len(word) for sent in sents for word in sent))
             if len(q) > 0:
                 config.max_ques_size = max(config.max_ques_size, len(q))
@@ -347,8 +358,11 @@ def update_config(config, data_sets):
 
     config.max_word_size = min(config.max_word_size, config.word_size_th)
 
+    # 字符表的大小
     config.char_vocab_size = len(data_sets[0].shared['char2idx'])
+    # 词向量的维度
     config.word_emb_size = len(next(iter(data_sets[0].shared['word2vec'].values())))
+    # 整个词表的大小
     config.word_vocab_size = len(data_sets[0].shared['word2idx'])
 
     if config.single:
