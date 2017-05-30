@@ -152,19 +152,42 @@ def add_wd(wd, scope=None):
 
 
 def grouper(iterable, n, fillvalue=None, shorten=False, num_groups=None):
+    '''
+
+    :param iterable: 可迭代的对象
+    :param n: 每组多少个元素
+    :param fillvalue: 不能对其的元素的填充值
+    :param shorten:
+    :param num_groups: 桶的数目
+    :return:
+    '''
     args = [iter(iterable)] * n
     out = zip_longest(*args, fillvalue=fillvalue)
-    # 到这里相当于把iterable中的内容依次放入n的桶中，多余的填入None
-    # 例如:[1,2,3,4,5]放入2个桶
-    # out:[[1,3,5],[2,4,None]]
+    # 到这里grouper的功能相当于把iterable中的内容依次放入int(math.ceil(iterable/n))个桶中，每个桶有n个元素，放不满的位置填入None
+    # 例如:[1,2,3,4,5]放入3个桶
+    # out:[[1,2],[3,4],[5,None]]
     out = list(out)
+    # 假设num_groups超过计算出来的桶的数目，用default填充each部分
     if num_groups is not None:
         default = (fillvalue, ) * n
         assert isinstance(num_groups, int)
-        out = list(each for each, _ in zip_longest(out, range(num_groups), fillvalue=default))
+        out = list(
+            each for each, _ in zip_longest(
+                out,
+                range(num_groups),
+                fillvalue=default
+            )
+        )
+    # 在each中过滤掉None元素
+    # 同样是上面的例子:
+    # out:[[1,2],[3,4],[5]]
     if shorten:
         assert fillvalue is None
-        out = (tuple(e for e in each if e is not None) for each in out)
+        out = (
+            tuple(
+                e for e in each if e is not None
+            ) for each in out
+        )
     return out
 
 def padded_reshape(tensor, shape, mode='CONSTANT', name=None):

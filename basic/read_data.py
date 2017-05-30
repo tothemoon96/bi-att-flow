@@ -85,11 +85,12 @@ class DataSet(object):
 
     def get_batches(self, batch_size, num_batches=None, shuffle=False, cluster=False):
         """
-        :param batch_size:
+        一个生成器，每调用一次，返回一个batch
+        :param batch_size:每个batch中有多少个问题
         :param num_batches:需要多少个这样的batch
-        :param shuffle:
+        :param shuffle:是否打乱数据
         :param cluster: cluster examples by their lengths; this might give performance boost (i.e. faster training).
-        :return:
+        :return:包含batch的中每个样本索引的tuple，存储batch真实内容的一个DataSet
         """
         # 每个epoch需要多少个batch
         num_batches_per_epoch = int(math.ceil(self.num_examples / batch_size))
@@ -102,8 +103,10 @@ class DataSet(object):
             if cluster:
                 # 按照每个问题对应的文章的最长的句子进行升序排序
                 sorted_idxs = sorted(random_idxs, key=self._sort_key)
-                # 将问题分组，让每一组的排序的key尽量均匀
-                sorted_grouped = lambda: list(grouper(sorted_idxs, batch_size))
+                # 将问题分组，让每一组中的问题对应的文章的最长的句子尽可能的一致
+                sorted_grouped = lambda: list(
+                    grouper(sorted_idxs, batch_size)
+                )
                 # 将不同batch之间的顺序打乱
                 grouped = lambda: random.sample(
                     sorted_grouped(),
@@ -122,16 +125,43 @@ class DataSet(object):
         )
         for _ in range(num_batches):
             batch_idxs = tuple(
-                # next(batch_idx_tuples)返回的是一个batch
+                # next(batch_idx_tuples)返回的是一个batch，并保证batch_idxs中没有None值
                 i for i in next(batch_idx_tuples) if i is not None
             )
             batch_data = self.get_by_idxs(batch_idxs)
+            # 存储文章的对应内容的一个dict，距离如下
+            # {
+            #     x:[（每一个样本）
+            #           [（每一句）
+            #                 [（每一句中的每一个词用str表示）
+            #                       xxx,xxx,xxx,xxx
+            #                 ],...
+            #           ]
+            #     ]
+            #     cx:[（每一个样本）
+            #           [（每一句）
+            #                 [（每一句中的每一个词用list表示）
+            #                       xxx,xxx,xxx,xxx
+            #                 ],...
+            #           ]
+            #     ]
+            #     p:[（每一个样本）
+            #           每一个段落的原始文本str
+            #     ]
+            # }
             shared_batch_data = {}
             for key, val in batch_data.items():
                 if key.startswith('*'):
                     assert self.shared is not None
                     shared_key = key[1:]
-                    shared_batch_data[shared_key] = [index(self.shared[shared_key], each) for each in val]
+                    shared_batch_data[shared_key] = \
+                        [
+                            index(
+                                self.shared[shared_key], each
+                            ) for each in val # each应该是一个[文章号索引，段落号索引]
+                        ]
+            # batch_data中增加shared_batch_data中的数据
+            # 添加了'x','cx','p'键值对
             batch_data.update(shared_batch_data)
 
             batch_ds = DataSet(batch_data, self.data_type, shared=self.shared)
@@ -145,6 +175,15 @@ class DataSet(object):
             shuffle=False,
             cluster=False
     ):
+        '''
+
+        :param batch_size:
+        :param num_batches_per_step: 每个step有几个batch
+        :param num_steps:
+        :param shuffle:
+        :param cluster:
+        :return:
+        '''
         batch_size_per_step = batch_size * num_batches_per_step
         batches = self.get_batches(
             batch_size_per_step,

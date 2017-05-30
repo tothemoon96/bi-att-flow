@@ -18,6 +18,12 @@ def json_pretty_dump(obj, fh):
 
 
 def index(l, i):
+    '''
+    使用i递归的将l解开，返回l在i处的内容
+    :param l: 一个list或者dict之类的能够使用索引的类型
+    :param i: 索引的list
+    :return:
+    '''
     return index(l[i[0]], i[1:]) if len(i) > 1 else l[i[0]]
 
 

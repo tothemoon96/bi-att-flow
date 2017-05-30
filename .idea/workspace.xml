@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/basic/read_data.py" line="148" mnemonic="1" />
-    <bookmark url="file://$PROJECT_DIR$/basic/read_data.py" line="85" mnemonic="2" />
-  </component>
   <component name="ChangeListManager">
     <list default="true" id="ca50f347-8917-446a-9aca-e8b1c35f73ba" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/main.py" afterPath="$PROJECT_DIR$/basic/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/model.py" afterPath="$PROJECT_DIR$/basic/model.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/read_data.py" afterPath="$PROJECT_DIR$/basic/read_data.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my/tensorflow/general.py" afterPath="$PROJECT_DIR$/my/tensorflow/general.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/squad/prepro.py" afterPath="$PROJECT_DIR$/squad/prepro.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my/utils.py" afterPath="$PROJECT_DIR$/my/utils.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -22,7 +16,7 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/bi_att_flow$prepro.coverage" NAME="prepro Coverage Results" MODIFIED="1496107146870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/bi_att_flow$train.coverage" NAME="train Coverage Results" MODIFIED="1496136289581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/bi_att_flow$train.coverage" NAME="train Coverage Results" MODIFIED="1496154886640" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
     <option name="SHOW_INTERMEDIATE" value="true" />
@@ -54,8 +48,8 @@
             <file leaf-file-name="prepro.py" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/squad/prepro.py">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="274">
-                    <caret line="453" column="14" lean-forward="true" selection-start-line="453" selection-start-column="14" selection-end-line="453" selection-end-column="14" />
+                  <state relative-caret-position="559">
+                    <caret line="359" column="35" lean-forward="false" selection-start-line="359" selection-start-column="35" selection-end-line="359" selection-end-column="35" />
                     <folding>
                       <element signature="e#0#15#0" expanded="true" />
                     </folding>
@@ -86,22 +80,10 @@
     <splitter split-orientation="horizontal" split-proportion="0.45415777">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
-          <file leaf-file-name="read_data.py" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/basic/read_data.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1909">
-                  <caret line="185" column="0" lean-forward="true" selection-start-line="185" selection-start-column="0" selection-end-line="185" selection-end-column="0" />
-                  <folding>
-                    <element signature="e#0#11#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
           <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/basic/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="118">
+                <state relative-caret-position="202">
                   <caret line="81" column="28" lean-forward="false" selection-start-line="81" selection-start-column="28" selection-end-line="81" selection-end-column="28" />
                   <folding>
                     <element signature="e#0#13#0" expanded="true" />
@@ -110,11 +92,23 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="utils.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="read_data.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/basic/read_data.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="456">
+                  <caret line="202" column="57" lean-forward="true" selection-start-line="202" selection-start-column="57" selection-end-line="202" selection-end-column="57" />
+                  <folding>
+                    <element signature="e#0#11#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="utils.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/my/utils.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="315">
-                  <caret line="19" column="4" lean-forward="false" selection-start-line="19" selection-start-column="4" selection-end-line="19" selection-end-column="4" />
+                <state relative-caret-position="334">
+                  <caret line="21" column="24" lean-forward="false" selection-start-line="21" selection-start-column="24" selection-end-line="21" selection-end-column="24" />
                   <folding />
                 </state>
               </provider>
@@ -127,8 +121,8 @@
           <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/basic/main.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1165">
-                  <caret line="119" column="32" lean-forward="false" selection-start-line="119" selection-start-column="32" selection-end-line="119" selection-end-column="32" />
+                <state relative-caret-position="220">
+                  <caret line="116" column="41" lean-forward="true" selection-start-line="116" selection-start-column="41" selection-end-line="116" selection-end-column="41" />
                   <folding>
                     <element signature="e#0#15#0" expanded="true" />
                   </folding>
@@ -139,8 +133,8 @@
           <file leaf-file-name="read_data.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/basic/read_data.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="546">
-                  <caret line="133" column="56" lean-forward="false" selection-start-line="133" selection-start-column="56" selection-end-line="133" selection-end-column="56" />
+                <state relative-caret-position="481">
+                  <caret line="228" column="8" lean-forward="false" selection-start-line="228" selection-start-column="8" selection-end-line="228" selection-end-column="8" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -151,31 +145,11 @@
           <file leaf-file-name="general.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="441">
-                  <caret line="158" column="30" lean-forward="true" selection-start-line="158" selection-start-column="30" selection-end-line="158" selection-end-column="30" />
+                <state relative-caret-position="456">
+                  <caret line="186" column="18" lean-forward="true" selection-start-line="186" selection-start-column="18" selection-end-line="186" selection-end-column="18" />
                   <folding>
                     <element signature="e#0#33#0" expanded="true" />
                   </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="itertools.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/itertools.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-422">
-                  <caret line="677" column="8" lean-forward="false" selection-start-line="677" selection-start-column="8" selection-end-line="677" selection-end-column="8" />
-                  <folding />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file leaf-file-name="_collections.py" pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/_collections.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="302">
-                  <caret line="45" column="8" lean-forward="false" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="8" />
-                  <folding />
                 </state>
               </provider>
             </entry>
@@ -224,6 +198,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/basic/read_data.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/squad/prepro.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/my/tensorflow/general.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/visualization/compare_models.py" root0="SKIP_INSPECTION" />
     <setting file="file://$PROJECT_DIR$/basic/model.py" root0="SKIP_INSPECTION" />
   </component>
@@ -235,10 +210,11 @@
         <option value="$PROJECT_DIR$/squad/utils.py" />
         <option value="$PROJECT_DIR$/basic/cli.py" />
         <option value="$PROJECT_DIR$/basic/model.py" />
-        <option value="$PROJECT_DIR$/my/tensorflow/general.py" />
         <option value="$PROJECT_DIR$/basic/main.py" />
-        <option value="$PROJECT_DIR$/basic/read_data.py" />
         <option value="$PROJECT_DIR$/squad/prepro.py" />
+        <option value="$PROJECT_DIR$/my/utils.py" />
+        <option value="$PROJECT_DIR$/my/tensorflow/general.py" />
+        <option value="$PROJECT_DIR$/basic/read_data.py" />
       </list>
     </option>
   </component>
@@ -719,6 +695,13 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/basic/read_data.py</url>
+          <line>186</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+      </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
@@ -729,22 +712,11 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="32" />
+      <option name="time" value="36" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-        <state split_layout="SPLIT">
-          <first_editor relative-caret-position="0">
-            <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-            <folding />
-          </first_editor>
-          <second_editor />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/squad/prepro.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1051,35 +1023,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/itertools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-422">
-          <caret line="677" column="8" lean-forward="false" selection-start-line="677" selection-start-column="8" selection-end-line="677" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1165">
-          <caret line="119" column="32" lean-forward="false" selection-start-line="119" selection-start-column="32" selection-end-line="119" selection-end-column="32" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/_collections.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="302">
-          <caret line="45" column="8" lean-forward="false" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/basic/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
+        <state relative-caret-position="202">
           <caret line="81" column="28" lean-forward="false" selection-start-line="81" selection-start-column="28" selection-end-line="81" selection-end-column="28" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
@@ -1095,28 +1041,62 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/my/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="334">
+          <caret line="21" column="24" lean-forward="false" selection-start-line="21" selection-start-column="24" selection-end-line="21" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/_collections.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="302">
+          <caret line="45" column="8" lean-forward="false" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/builtins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="302">
+          <caret line="2810" column="8" lean-forward="false" selection-start-line="2810" selection-start-column="8" selection-end-line="2810" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2017.1/system/python_stubs/1860324320/itertools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="313">
+          <caret line="677" column="8" lean-forward="false" selection-start-line="677" selection-start-column="8" selection-end-line="677" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/squad/prepro.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="274">
-          <caret line="453" column="14" lean-forward="true" selection-start-line="453" selection-start-column="14" selection-end-line="453" selection-end-column="14" />
+        <state relative-caret-position="559">
+          <caret line="359" column="35" lean-forward="false" selection-start-line="359" selection-start-column="35" selection-end-line="359" selection-end-column="35" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/my/utils.py">
+    <entry file="file://$PROJECT_DIR$/basic/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="19" column="4" lean-forward="false" selection-start-line="19" selection-start-column="4" selection-end-line="19" selection-end-column="4" />
-          <folding />
+        <state relative-caret-position="220">
+          <caret line="116" column="41" lean-forward="true" selection-start-line="116" selection-start-column="41" selection-end-line="116" selection-end-column="41" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="441">
-          <caret line="158" column="30" lean-forward="true" selection-start-line="158" selection-start-column="30" selection-end-line="158" selection-end-column="30" />
+        <state relative-caret-position="456">
+          <caret line="186" column="18" lean-forward="true" selection-start-line="186" selection-start-column="18" selection-end-line="186" selection-end-column="18" />
           <folding>
             <element signature="e#0#33#0" expanded="true" />
           </folding>
@@ -1125,8 +1105,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/basic/read_data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="546">
-          <caret line="133" column="56" lean-forward="false" selection-start-line="133" selection-start-column="56" selection-end-line="133" selection-end-column="56" />
+        <state relative-caret-position="456">
+          <caret line="202" column="57" lean-forward="true" selection-start-line="202" selection-start-column="57" selection-end-line="202" selection-end-column="57" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
