@@ -68,15 +68,25 @@ def _train(config):
     dev_data = read_data(config, 'dev', True, data_filter=data_filter)
     # dev和train共用同一个'word2idx'和'char2idx'
     update_config(config, [train_data, dev_data])
-
+    # 如果是debug，则进行debug的设置
     _config_debug(config)
 
     word2vec_dict = train_data.shared['lower_word2vec'] if config.lower_word else train_data.shared['word2vec']
     word2idx_dict = train_data.shared['word2idx']
-    idx2vec_dict = {word2idx_dict[word]: vec for word, vec in word2vec_dict.items() if word in word2idx_dict}
-    emb_mat = np.array([idx2vec_dict[idx] if idx in idx2vec_dict
-                        else np.random.multivariate_normal(np.zeros(config.word_emb_size), np.eye(config.word_emb_size))
-                        for idx in range(config.word_vocab_size)])
+    idx2vec_dict = {word2idx_dict[word]: vec for word, vec in word2vec_dict.items()
+                    # word同时在word2idx_dict和word2vec_dict中存在
+                    if word in word2idx_dict}
+    emb_mat = np.array([
+        idx2vec_dict[idx]
+        # 如果idx在idx2vec_dict中出现过，使用训练好的word2vec
+        if idx in idx2vec_dict
+        # 否则使用正态分布初始化
+        else np.random.multivariate_normal(
+            np.zeros(config.word_emb_size),
+            np.eye(config.word_emb_size)
+        )
+        for idx in range(config.word_vocab_size)
+    ])
     config.emb_mat = emb_mat
 
     # construct model graph and variables (using default graph)
@@ -95,8 +105,16 @@ def _train(config):
     # Begin training
     num_steps = config.num_steps or int(math.ceil(train_data.num_examples / (config.batch_size * config.num_gpus))) * config.num_epochs
     global_step = 0
-    for batches in tqdm(train_data.get_multi_batches(config.batch_size, config.num_gpus,
-                                                     num_steps=num_steps, shuffle=True, cluster=config.cluster), total=num_steps):
+    for batches in tqdm(
+            train_data.get_multi_batches(
+                config.batch_size,
+                config.num_gpus,
+                num_steps=num_steps,
+                shuffle=True,
+                cluster=config.cluster
+            ),
+            total=num_steps
+    ):
         global_step = sess.run(model.global_step) + 1  # +1 because all calculations are done after step
         get_summary = global_step % config.log_period == 0
         loss, summary, train_op = trainer.step(sess, batches, get_summary=get_summary)

@@ -200,7 +200,7 @@ def read_data(config, data_type, ref, data_filter=None):
 
         # idx偏移两个位置是为了表示NULL和UNK
         if config.finetune:
-            # 下面的操作把每个词用token来表示
+            # 下面的操作把word2vec_dict存在的词用token来表示
             shared['word2idx'] = {word: idx + 2 for idx, word in
                                   enumerate(word for word, count in word_counter.items()
                                             # 高于某个词频 or （使用glove and 在glove中出现过）
@@ -348,6 +348,7 @@ def update_config(config, data_sets):
             # 每个词最多包含多少个单词
             config.max_word_size = max(config.max_word_size, max(len(word) for sent in sents for word in sent))
             if len(q) > 0:
+                # 每个问题最多包含多少个词
                 config.max_ques_size = max(config.max_ques_size, len(q))
                 config.max_word_size = max(config.max_word_size, max(len(word) for word in q))
 

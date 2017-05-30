@@ -15,6 +15,7 @@ from my.tensorflow.rnn_cell import SwitchableDropoutWrapper, AttentionCell
 def get_multi_gpu_models(config):
     models = []
     for gpu_idx in range(config.num_gpus):
+        # 每一块显卡上都创建一份Model
         with tf.name_scope("model_{}".format(gpu_idx)) as scope, tf.device("/{}:{}".format(config.device_type, gpu_idx)):
             if gpu_idx > 0:
                 tf.get_variable_scope().reuse_variables()
@@ -25,6 +26,11 @@ def get_multi_gpu_models(config):
 
 class Model(object):
     def __init__(self, config, scope, rep=True):
+        '''
+        :param config:
+        :param scope:
+        :param rep: 是否创建全新的变量
+        '''
         self.scope = scope
         self.config = config
         self.global_step = tf.get_variable('global_step', shape=[], dtype='int32',
