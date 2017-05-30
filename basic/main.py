@@ -103,7 +103,15 @@ def _train(config):
     graph_handler.initialize(sess)
 
     # Begin training
-    num_steps = config.num_steps or int(math.ceil(train_data.num_examples / (config.batch_size * config.num_gpus))) * config.num_epochs
+    # 以num_steps和batch_size为准
+    num_steps = config.num_steps or \
+                int(
+                    math.ceil(
+                        train_data.num_examples /
+                        # 一个step里要处理这些样本
+                        (config.batch_size * config.num_gpus)
+                    )
+                ) * config.num_epochs
     global_step = 0
     for batches in tqdm(
             train_data.get_multi_batches(

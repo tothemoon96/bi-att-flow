@@ -154,6 +154,9 @@ def add_wd(wd, scope=None):
 def grouper(iterable, n, fillvalue=None, shorten=False, num_groups=None):
     args = [iter(iterable)] * n
     out = zip_longest(*args, fillvalue=fillvalue)
+    # 到这里相当于把iterable中的内容依次放入n的桶中，多余的填入None
+    # 例如:[1,2,3,4,5]放入2个桶
+    # out:[[1,3,5],[2,4,None]]
     out = list(out)
     if num_groups is not None:
         default = (fillvalue, ) * n

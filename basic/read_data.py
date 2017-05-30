@@ -50,8 +50,15 @@ class DataSet(object):
         self.num_examples = len(self.valid_idxs)
 
     def _sort_key(self, idx):
+        # 每个问题的[文章号索引，段落号索引]
         rx = self.data['*x'][idx]
+        # [（每一句）
+        #   [（每一句中的每一个词用str表示）
+        #       xxx,xxx,xxx,xxx
+        #   ],...
+        # ]
         x = self.shared['x'][rx[0]][rx[1]]
+        # 返回最长的句子的长度
         return max(map(len, x))
 
     def get_data_size(self):
@@ -62,6 +69,11 @@ class DataSet(object):
         raise Exception()
 
     def get_by_idxs(self, idxs):
+        '''
+        得到真实的数据
+        :param idxs: 存储batch中数据在self.data中的索引
+        :return: 和self.data类似，得到的只不过是其中的一批样本
+        '''
         if isinstance(self.data, dict):
             out = defaultdict(list)
             for key, val in self.data.items():
@@ -73,13 +85,13 @@ class DataSet(object):
 
     def get_batches(self, batch_size, num_batches=None, shuffle=False, cluster=False):
         """
-
         :param batch_size:
-        :param num_batches:
+        :param num_batches:需要多少个这样的batch
         :param shuffle:
         :param cluster: cluster examples by their lengths; this might give performance boost (i.e. faster training).
         :return:
         """
+        # 每个epoch需要多少个batch
         num_batches_per_epoch = int(math.ceil(self.num_examples / batch_size))
         if num_batches is None:
             num_batches = num_batches_per_epoch
@@ -88,9 +100,15 @@ class DataSet(object):
         if shuffle:
             random_idxs = random.sample(self.valid_idxs, len(self.valid_idxs))
             if cluster:
+                # 按照每个问题对应的文章的最长的句子进行升序排序
                 sorted_idxs = sorted(random_idxs, key=self._sort_key)
+                # 将问题分组，让每一组的排序的key尽量均匀
                 sorted_grouped = lambda: list(grouper(sorted_idxs, batch_size))
-                grouped = lambda: random.sample(sorted_grouped(), num_batches_per_epoch)
+                # 将不同batch之间的顺序打乱
+                grouped = lambda: random.sample(
+                    sorted_grouped(),
+                    num_batches_per_epoch
+                )
             else:
                 random_grouped = lambda: list(grouper(random_idxs, batch_size))
                 grouped = random_grouped
@@ -98,9 +116,15 @@ class DataSet(object):
             raw_grouped = lambda: list(grouper(self.valid_idxs, batch_size))
             grouped = raw_grouped
 
-        batch_idx_tuples = itertools.chain.from_iterable(grouped() for _ in range(num_epochs))
+        # grouped()=>[[（每个batch内的样本）],...（不同的batch）]
+        batch_idx_tuples = itertools.chain.from_iterable(
+            grouped() for _ in range(num_epochs)
+        )
         for _ in range(num_batches):
-            batch_idxs = tuple(i for i in next(batch_idx_tuples) if i is not None)
+            batch_idxs = tuple(
+                # next(batch_idx_tuples)返回的是一个batch
+                i for i in next(batch_idx_tuples) if i is not None
+            )
             batch_data = self.get_by_idxs(batch_idxs)
             shared_batch_data = {}
             for key, val in batch_data.items():
@@ -113,11 +137,34 @@ class DataSet(object):
             batch_ds = DataSet(batch_data, self.data_type, shared=self.shared)
             yield batch_idxs, batch_ds
 
-    def get_multi_batches(self, batch_size, num_batches_per_step, num_steps=None, shuffle=False, cluster=False):
+    def get_multi_batches(
+            self,
+            batch_size,
+            num_batches_per_step,
+            num_steps=None,
+            shuffle=False,
+            cluster=False
+    ):
         batch_size_per_step = batch_size * num_batches_per_step
-        batches = self.get_batches(batch_size_per_step, num_batches=num_steps, shuffle=shuffle, cluster=cluster)
-        multi_batches = (tuple(zip(grouper(idxs, batch_size, shorten=True, num_groups=num_batches_per_step),
-                         data_set.divide(num_batches_per_step))) for idxs, data_set in batches)
+        batches = self.get_batches(
+            batch_size_per_step,
+            num_batches=num_steps,
+            shuffle=shuffle,
+            cluster=cluster
+        )
+        multi_batches = (
+            tuple(
+                zip(
+                    grouper(
+                        idxs,
+                        batch_size,
+                        shorten=True,
+                        num_groups=num_batches_per_step
+                    ),
+                    data_set.divide(num_batches_per_step)
+                )
+            ) for idxs, data_set in batches
+        )
         return multi_batches
 
     def get_empty(self):
@@ -159,7 +206,7 @@ def load_metadata(config, data_type):
 
 def read_data(config, data_type, ref, data_filter=None):
     '''
-
+    过滤样本点，构造word2idx和idx2embedding，并建立DataSet对象
     :param config:
     :param data_type:'train','dev','test'
     :param ref:

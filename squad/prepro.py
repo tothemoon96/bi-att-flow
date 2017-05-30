@@ -435,6 +435,8 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     # [（每个问题）
     #   问题的是否存在答案（True，False）
     # ]
+
+    # 其中带*的键名都是和某个文章，某个段落有关的键，有x，cx，p，它存储的都是文章对应内容的索引
     data = {'q': q, 'cq': cq, 'y': y, '*x': rx, '*cx': rcx, 'cy': cy,
             'idxs': idxs, 'ids': ids, 'answerss': answerss, '*p': rx, 'na': na}
     # x:
