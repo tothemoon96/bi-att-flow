@@ -191,6 +191,8 @@ class DataSet(object):
             shuffle=shuffle,
             cluster=cluster
         )
+        # 把batches按照顺序拆分成num_batches_per_step组小batch
+        # (([样本点索引],DataSet),...（num_batches_per_step个这样的tuple）)
         multi_batches = (
             tuple(
                 zip(
@@ -227,6 +229,11 @@ class DataSet(object):
         return DataSet(data, self.data_type, shared=self.shared, valid_idxs=valid_idxs)
 
     def divide(self, integer):
+        '''
+        把整个数据集分为integer个小数据集
+        :param integer: 分组的组数
+        :return:分组后的DataSet的tuple
+        '''
         batch_size = int(math.ceil(self.num_examples / integer))
         idxs_gen = grouper(self.valid_idxs, batch_size, shorten=True, num_groups=integer)
         data_gen = (self.get_by_idxs(idxs) for idxs in idxs_gen)

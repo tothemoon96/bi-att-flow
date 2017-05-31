@@ -71,11 +71,13 @@ def _train(config):
     # 如果是debug，则进行debug的设置
     _config_debug(config)
 
-    word2vec_dict = train_data.shared['lower_word2vec'] if config.lower_word else train_data.shared['word2vec']
+    word2vec_dict = \
+        train_data.shared['lower_word2vec'] if config.lower_word else train_data.shared['word2vec']
     word2idx_dict = train_data.shared['word2idx']
     idx2vec_dict = {word2idx_dict[word]: vec for word, vec in word2vec_dict.items()
                     # word同时在word2idx_dict和word2vec_dict中存在
                     if word in word2idx_dict}
+    # todo:这个矩阵应该是要训练的word embedding矩阵了
     emb_mat = np.array([
         idx2vec_dict[idx]
         # 如果idx在idx2vec_dict中出现过，使用训练好的word2vec
@@ -95,7 +97,11 @@ def _train(config):
     model = models[0]
     print("num params: {}".format(get_num_params()))
     trainer = MultiGPUTrainer(config, models)
-    evaluator = MultiGPUF1Evaluator(config, models, tensor_dict=model.tensor_dict if config.vis else None)
+    evaluator = MultiGPUF1Evaluator(
+        config,
+        models,
+        tensor_dict=model.tensor_dict if config.vis else None
+    )
     graph_handler = GraphHandler(config, model)  # controls all tensors and variables in the graph, including loading /saving
 
     # Variables
@@ -123,9 +129,14 @@ def _train(config):
             ),
             total=num_steps
     ):
-        global_step = sess.run(model.global_step) + 1  # +1 because all calculations are done after step
+        # +1 because all calculations are done after step
+        global_step = sess.run(model.global_step) + 1
         get_summary = global_step % config.log_period == 0
-        loss, summary, train_op = trainer.step(sess, batches, get_summary=get_summary)
+        loss, summary, train_op = trainer.step(
+            sess,
+            batches,
+            get_summary=get_summary
+        )
         if get_summary:
             graph_handler.add_summary(summary, global_step)
 

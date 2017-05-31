@@ -35,21 +35,42 @@ class Model(object):
         '''
         self.scope = scope
         self.config = config
-        self.global_step = tf.get_variable('global_step', shape=[], dtype='int32',
-                                           initializer=tf.constant_initializer(0), trainable=False)
+        self.global_step = tf.get_variable(
+            'global_step',
+            shape=[],
+            dtype='int32',
+            initializer=tf.constant_initializer(0),
+            trainable=False
+        )
 
         # Define forward inputs here
+        # N:batch的大小
+        # M:每一段最多有多少个句子
+        # JX:每一句最长有多少个词
+        # JQ:每个问题最多包含多少个词
+        # VW:整个词表的大小
+        # VC:字符表的大小
+        # W:每个词最多包含多少个单词
         N, M, JX, JQ, VW, VC, W = \
             config.batch_size, config.max_num_sents, config.max_sent_size, \
             config.max_ques_size, config.word_vocab_size, config.char_vocab_size, config.max_word_size
+        # 文章：[第几个样本，第几个句子，第几个词]
         self.x = tf.placeholder('int32', [N, None, None], name='x')
+        # 文章：[第几个样本，第几个句子，第几个词，第几个单词]
         self.cx = tf.placeholder('int32', [N, None, None, W], name='cx')
+        # 文章：[第几个样本，第几个句子，第几个词]
         self.x_mask = tf.placeholder('bool', [N, None, None], name='x_mask')
+        # 问题：[第几个样本，第几个词]
         self.q = tf.placeholder('int32', [N, None], name='q')
+        # 问题：[第几个样本，第几个词，第几个单词]
         self.cq = tf.placeholder('int32', [N, None, W], name='cq')
+        # 问题：[第几个样本，第几个词]
         self.q_mask = tf.placeholder('bool', [N, None], name='q_mask')
+        # 答案：[第几个样本，第几个词，第几个单词]，起始单词为True
         self.y = tf.placeholder('bool', [N, None, None], name='y')
+        # 答案：[第几个样本，第几个词，第几个单词]，终止单词为True
         self.y2 = tf.placeholder('bool', [N, None, None], name='y2')
+        # 答案：[第几个样本，第几个词，第几个单词]，整个答案跨越的词的span为True
         self.wy = tf.placeholder('bool', [N, None, None], name='wy')
         self.is_train = tf.placeholder('bool', [], name='is_train')
         self.new_emb_mat = tf.placeholder('float', [None, config.word_emb_size], name='new_emb_mat')
@@ -331,11 +352,27 @@ class Model(object):
         return self.var_list
 
     def get_feed_dict(self, batch, is_train, supervised=True):
+        '''
+        这里可以看到placeholder和batch之间的对应关系
+        :param batch:
+        :param is_train:
+        :param supervised:
+        :return:
+        '''
         assert isinstance(batch, DataSet)
         config = self.config
+        # N:batch的大小
+        # M:每一段最多有多少个句子
+        # JX:每一句最长有多少个词
+        # JQ:每个问题最多包含多少个词
+        # VW:整个词表的大小
+        # VC:字符表的大小
+        # d:隐含层单元数目
+        # W:每个词最多包含多少个单词
         N, M, JX, JQ, VW, VC, d, W = \
             config.batch_size, config.max_num_sents, config.max_sent_size, \
-            config.max_ques_size, config.word_vocab_size, config.char_vocab_size, config.hidden_size, config.max_word_size
+            config.max_ques_size, config.word_vocab_size, config.char_vocab_size, \
+            config.hidden_size, config.max_word_size
         feed_dict = {}
 
         if config.len_opt:
@@ -343,12 +380,14 @@ class Model(object):
             Note that this optimization results in variable GPU RAM usage (i.e. can cause OOM in the middle of training.)
             First test without len_opt and make sure no OOM, and use len_opt
             """
+            # 计算这个batch中每一句最长有多少个词
             if sum(len(sent) for para in batch.data['x'] for sent in para) == 0:
                 new_JX = 1
             else:
                 new_JX = max(len(sent) for para in batch.data['x'] for sent in para)
             JX = min(JX, new_JX)
 
+            # 计算这个batch中每个问题最多包含多少个词
             if sum(len(ques) for ques in batch.data['q']) == 0:
                 new_JQ = 1
             else:
@@ -356,13 +395,16 @@ class Model(object):
             JQ = min(JQ, new_JQ)
 
         if config.cpu_opt:
+            # 计算这个batch中每一段最多有多少个句子
             if sum(len(para) for para in batch.data['x']) == 0:
                 new_M = 1
             else:
                 new_M = max(len(para) for para in batch.data['x'])
             M = min(M, new_M)
 
+        # 词级别的输入
         x = np.zeros([N, M, JX], dtype='int32')
+        # 单词级别的输入
         cx = np.zeros([N, M, JX, W], dtype='int32')
         x_mask = np.zeros([N, M, JX], dtype='bool')
         q = np.zeros([N, JQ], dtype='int32')
@@ -392,35 +434,57 @@ class Model(object):
             feed_dict[self.wy] = wy
             feed_dict[self.na] = na
 
-            for i, (xi, cxi, yi, nai) in enumerate(zip(X, CX, batch.data['y'], batch.data['na'])):
+            # i表示的是一个batch中的第几个样本
+            # 循环的功能是想numpy数组填充内容
+            for i, (xi, cxi, yi, nai) in enumerate(
+                    zip(X, CX, batch.data['y'], batch.data['na'])
+            ):
+                # 某个问题没有答案的话
                 if nai:
                     na[i] = nai
                     continue
+                # 从几个备选答案中随机选择一个答案，得到其标志答案在文章哪个位置的索引
                 start_idx, stop_idx = random.choice(yi)
+                # 起始词：句号，词号
                 j, k = start_idx
+                # 终止词：句号，词号
                 j2, k2 = stop_idx
                 if config.single:
                     X[i] = [xi[j]]
                     CX[i] = [cxi[j]]
                     j, j2 = 0, 0
                 if config.squash:
+                    # 计算第j个句子之间的句子包含了多少个词
                     offset = sum(map(len, xi[:j]))
+                    # 修正索引
                     j, k = 0, k + offset
+                    # 计算第j2个句子之间的句子包含了多少个词
                     offset = sum(map(len, xi[:j2]))
+                    # 修正索引
                     j2, k2 = 0, k2 + offset
+                # 第i个样本，第j个句子，第k个词
                 y[i, j, k] = True
                 y2[i, j2, k2-1] = True
+                # 如果整个答案在同一句之中
                 if j == j2:
                     wy[i, j, k:k2] = True
+                # 如果整个答案不在同一句之中
                 else:
                     wy[i, j, k:len(batch.data['x'][i][j])] = True
+                    # todo:其实这里有点问题，应该是j，k到j2，k2之间所有的词全部都为True，但是因为没有答案跨越的句子超过2句，所以不会有bug
                     wy[i, j2, :k2] = True
 
         def _get_word(word):
+            '''
+            查找某个词的token
+            :param word:
+            :return:
+            '''
             d = batch.shared['word2idx']
             for each in (word, word.lower(), word.capitalize(), word.upper()):
                 if each in d:
                     return d[each]
+            # todo:看来shared['new_word2idx']是跟在shared['word2idx']之后编号的
             if config.use_glove_for_unk:
                 d2 = batch.shared['new_word2idx']
                 for each in (word, word.lower(), word.capitalize(), word.upper()):
@@ -429,6 +493,11 @@ class Model(object):
             return 1
 
         def _get_char(char):
+            '''
+            查找某个单词的token
+            :param char:
+            :return:
+            '''
             d = batch.shared['char2idx']
             if char in d:
                 return d[char]

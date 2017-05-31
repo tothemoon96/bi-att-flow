@@ -25,6 +25,7 @@ flags.DEFINE_integer("num_gpus", 1, "num of gpus or cpus for computing gradients
 # Essential training and test options
 flags.DEFINE_string("mode", "test", "trains | test | forward [test]")
 flags.DEFINE_boolean("load", True, "load saved data? [True]")
+# 训练数据中整段话不分句，答案限定在有一个句子之中
 flags.DEFINE_bool("single", False, "supervise only the answer sentence? [False]")
 flags.DEFINE_boolean("debug", False, "Debugging mode? [False]")
 flags.DEFINE_bool('load_ema', True, "load exponential average of variables when testing?  [True]")
@@ -84,6 +85,7 @@ flags.DEFINE_integer("para_size_th", 256, "para size th [256]")
 
 # Advanced training options
 flags.DEFINE_bool("lower_word", True, "lower word [True]")
+# 训练的时候，将不同的分句压缩到一句
 flags.DEFINE_bool("squash", False, "squash the sentences into one? [False]")
 flags.DEFINE_bool("swap_memory", True, "swap memory? [True]")
 flags.DEFINE_string("data_filter", "max", "max | valid | semi [max]")
