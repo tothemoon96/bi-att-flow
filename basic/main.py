@@ -93,9 +93,11 @@ def _train(config):
 
     # construct model graph and variables (using default graph)
     pprint(config.__flags, indent=2)
+    # 创建模型
     models = get_multi_gpu_models(config)
     model = models[0]
     print("num params: {}".format(get_num_params()))
+
     trainer = MultiGPUTrainer(config, models)
     evaluator = MultiGPUF1Evaluator(
         config,

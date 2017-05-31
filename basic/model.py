@@ -19,6 +19,7 @@ def get_multi_gpu_models(config):
         with tf.name_scope("model_{}".format(gpu_idx)) as scope, \
                 tf.device("/{}:{}".format(config.device_type, gpu_idx)):
             if gpu_idx > 0:
+                # 只在第一个gpu上创建变量，其他的gpu上reuse这些变量
                 tf.get_variable_scope().reuse_variables()
             model = Model(config, scope, rep=gpu_idx == 0)
             models.append(model)
@@ -54,17 +55,17 @@ class Model(object):
         N, M, JX, JQ, VW, VC, W = \
             config.batch_size, config.max_num_sents, config.max_sent_size, \
             config.max_ques_size, config.word_vocab_size, config.char_vocab_size, config.max_word_size
-        # 文章：[第几个样本，第几个句子，第几个词]
+        # 文章：[第几个样本，第几个句子，第几个词]，文章词的token表示
         self.x = tf.placeholder('int32', [N, None, None], name='x')
-        # 文章：[第几个样本，第几个句子，第几个词，第几个单词]
+        # 文章：[第几个样本，第几个句子，第几个词，第几个单词]，文章单词的token表示
         self.cx = tf.placeholder('int32', [N, None, None, W], name='cx')
-        # 文章：[第几个样本，第几个句子，第几个词]
+        # 文章：[第几个样本，第几个句子，第几个词]，文章中哪些词转化成了token
         self.x_mask = tf.placeholder('bool', [N, None, None], name='x_mask')
-        # 问题：[第几个样本，第几个词]
+        # 问题：[第几个样本，第几个词]，问题词的token表示
         self.q = tf.placeholder('int32', [N, None], name='q')
-        # 问题：[第几个样本，第几个词，第几个单词]
+        # 问题：[第几个样本，第几个词，第几个单词]，问题单词的token表示
         self.cq = tf.placeholder('int32', [N, None, W], name='cq')
-        # 问题：[第几个样本，第几个词]
+        # 问题：[第几个样本，第几个词]，问题中哪些词转化成了token
         self.q_mask = tf.placeholder('bool', [N, None], name='q_mask')
         # 答案：[第几个样本，第几个词，第几个单词]，起始单词为True
         self.y = tf.placeholder('bool', [N, None, None], name='y')
@@ -73,7 +74,9 @@ class Model(object):
         # 答案：[第几个样本，第几个词，第几个单词]，整个答案跨越的词的span为True
         self.wy = tf.placeholder('bool', [N, None, None], name='wy')
         self.is_train = tf.placeholder('bool', [], name='is_train')
+        # config.word_emb_size词向量的维度
         self.new_emb_mat = tf.placeholder('float', [None, config.word_emb_size], name='new_emb_mat')
+        # [第几个样本]，某个数据点是否无效
         self.na = tf.placeholder('bool', [N], name='na')
 
         # Define misc
@@ -505,15 +508,19 @@ class Model(object):
 
         for i, xi in enumerate(X):
             if self.config.squash:
+                # 把几句话压缩到一句中
                 xi = [list(itertools.chain(*xi))]
+            # 对每个句子
             for j, xij in enumerate(xi):
                 if j == config.max_num_sents:
                     break
+                # 对每个词
                 for k, xijk in enumerate(xij):
                     if k == config.max_sent_size:
                         break
                     each = _get_word(xijk)
                     assert isinstance(each, int), each
+                    # 得到词的token的表示
                     x[i, j, k] = each
                     x_mask[i, j, k] = True
 
@@ -523,15 +530,19 @@ class Model(object):
             for j, cxij in enumerate(cxi):
                 if j == config.max_num_sents:
                     break
+                # 对每个词
                 for k, cxijk in enumerate(cxij):
                     if k == config.max_sent_size:
                         break
+                    # 对每个单词
                     for l, cxijkl in enumerate(cxijk):
                         if l == config.max_word_size:
                             break
+                        # 得到单词的token的表示
                         cx[i, j, k, l] = _get_char(cxijkl)
 
         for i, qi in enumerate(batch.data['q']):
+            # 对问题中的每个词
             for j, qij in enumerate(qi):
                 q[i, j] = _get_word(qij)
                 q_mask[i, j] = True
@@ -544,6 +555,7 @@ class Model(object):
                         break
 
         if supervised:
+            # 不要出现wy指示答案出现位置的词没有被tokenized的情况
             assert np.sum(~(x_mask | ~wy)) == 0
 
         return feed_dict
