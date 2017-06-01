@@ -19,7 +19,7 @@ def get_multi_gpu_models(config):
         with tf.name_scope("model_{}".format(gpu_idx)) as scope, \
                 tf.device("/{}:{}".format(config.device_type, gpu_idx)):
             if gpu_idx > 0:
-                # 只在第一个gpu上创建变量，其他的gpu上reuse这些变量
+                # 在其它gpu上创建模型时重用变量
                 tf.get_variable_scope().reuse_variables()
             model = Model(config, scope, rep=gpu_idx == 0)
             models.append(model)
@@ -94,6 +94,7 @@ class Model(object):
         self._build_forward()
         self._build_loss()
         self.var_ema = None
+        # 创建全新的变量
         if rep:
             self._build_var_ema()
         if config.mode == 'train':
@@ -104,18 +105,34 @@ class Model(object):
 
     def _build_forward(self):
         config = self.config
+        # N:batch的大小
+        # M:每一段最多有多少个句子
+        # JX:每一句最长有多少个词
+        # JQ:每个问题最多包含多少个词
+        # VW:整个词表的大小
+        # VC:字符表的大小
+        # d:隐含层单元数目
+        # W:每个词最多包含多少个单词
         N, M, JX, JQ, VW, VC, d, W = \
             config.batch_size, config.max_num_sents, config.max_sent_size, \
             config.max_ques_size, config.word_vocab_size, config.char_vocab_size, config.hidden_size, \
             config.max_word_size
+        # JX:每一句最长有多少个词
         JX = tf.shape(self.x)[2]
+        # JQ:每个问题最多包含多少个词
         JQ = tf.shape(self.q)[1]
+        # M:每一段最多有多少个句子
         M = tf.shape(self.x)[1]
+        # dc:单词的embedding的维度
+        # dw:词的embedding的维度
+        # dco:单词embedding之后输出的维度
         dc, dw, dco = config.char_emb_size, config.word_emb_size, config.char_out_size
 
         with tf.variable_scope("emb"):
             if config.use_char_emb:
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
+                    # VC:字符表的大小
+                    # dc:单词的embedding的维度
                     char_emb_mat = tf.get_variable("char_emb_mat", shape=[VC, dc], dtype='float')
 
                 with tf.variable_scope("char"):

@@ -19,6 +19,7 @@ from my.tensorflow import get_num_params
 
 def main(config):
     set_dirs(config)
+    # 默认存放在CPU上
     with tf.device(config.device):
         if config.mode == 'train':
             _train(config)
