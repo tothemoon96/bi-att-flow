@@ -29,9 +29,20 @@ def linear(args, output_size, bias, bias_start=0.0, scope=None, squeeze=False, w
 
 
 def dropout(x, keep_prob, is_train, noise_shape=None, seed=None, name=None):
+    '''
+    对x进行Dropout
+    :param x: 输入的Tensor
+    :param keep_prob: 保留的概率
+    :param is_train:
+    :param noise_shape:
+    :param seed:
+    :param name:
+    :return:keep_prob < 1.0 and is_train时，返回dropout包装后的out，否则返回x
+    '''
     with tf.name_scope(name or "dropout"):
         if keep_prob < 1.0:
             d = tf.nn.dropout(x, keep_prob, noise_shape=noise_shape, seed=seed)
+            # 条件转移
             out = tf.cond(is_train, lambda: d, lambda: x)
             return out
         return x
@@ -155,26 +166,66 @@ def highway_network(arg, num_layers, bias, bias_start=0.0, scope=None, wd=0.0, i
 
 
 def conv1d(in_, filter_size, height, padding, is_train=None, keep_prob=1.0, scope=None):
+    '''
+    卷积层->relu->max polling，得到某个词的embedding
+    只在词内进行卷积，卷积核不在词与词之间滑动
+    max_polling在W维度上进行，对某个词的某个feature维度，取所有单词中的最大值
+    :param in_:[N*M,JX,W,dc]
+    :param filter_size:有多少个卷积核
+    :param height:卷积核的大小
+    :param padding:
+    :param is_train:是否是训练状态，与Dropout有关
+    :param keep_prob:
+    :param scope:[N*M,JX,filter_size]
+    :return:
+    '''
     with tf.variable_scope(scope or "conv1d"):
+        # num_channels:单词的embedding的维度
         num_channels = in_.get_shape()[-1]
-        filter_ = tf.get_variable("filter", shape=[1, height, num_channels, filter_size], dtype='float')
+        # todo:没有指定初始化策略
+        filter_ = tf.get_variable(
+            "filter",
+            shape=[1, height, num_channels, filter_size],
+            dtype='float'
+        )
+        # todo:没有指定初始化策略
         bias = tf.get_variable("bias", shape=[filter_size], dtype='float')
         strides = [1, 1, 1, 1]
+        # 如果是训练and启用了Dropout，那么就在输入层进行Dropout
+        # todo:在推断过程中模型是不是要乘以一个系数呢
         if is_train is not None and keep_prob < 1.0:
             in_ = dropout(in_, keep_prob, is_train)
-        xxc = tf.nn.conv2d(in_, filter_, strides, padding) + bias  # [N*M, JX, W/filter_stride, d]
-        out = tf.reduce_max(tf.nn.relu(xxc), 2)  # [-1, JX, d]
+        # xxc:[N*M,JX,W-height+1,filter_size]
+        xxc = tf.nn.conv2d(in_, filter_, strides, padding) + bias
+        # 经过激活函数后，进行max pooling操作，得到某个词的embedding
+        # out:[N*M,JX,filter_size]
+        out = tf.reduce_max(tf.nn.relu(xxc), 2)
         return out
 
 
 def multi_conv1d(in_, filter_sizes, heights, padding, is_train=None, keep_prob=1.0, scope=None):
+    '''
+    计算经过不同类型的卷积核处理之后的词嵌入，内部包含卷积层->relu->max polling
+    :param in_:[N*M,JX,W,dc]
+    :param filter_sizes:不同大小的卷积核每种需要多少个的list
+    :param heights:不同大小的卷积核的list
+    :param padding:
+    :param is_train:是否是训练状态，与Dropout有关
+    :param keep_prob:
+    :param scope:
+    :return:[N*M,JX,filter_size*多少种卷积核]
+    '''
     with tf.variable_scope(scope or "multi_conv1d"):
         assert len(filter_sizes) == len(heights)
         outs = []
+        # 对每个filter
         for filter_size, height in zip(filter_sizes, heights):
             if filter_size == 0:
                 continue
+            # 创建每个filter
             out = conv1d(in_, filter_size, height, padding, is_train=is_train, keep_prob=keep_prob, scope="conv1d_{}".format(height))
+            # [多少种卷积核,N*M,JX,filter_size]
             outs.append(out)
+        # [N*M,JX,filter_size*多少种卷积核]
         concat_out = tf.concat(axis=2, values=outs)
         return concat_out

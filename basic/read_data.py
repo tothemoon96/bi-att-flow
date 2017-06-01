@@ -291,7 +291,8 @@ def read_data(config, data_type, ref, data_filter=None):
         word_counter = shared['lower_word_counter'] if config.lower_word else shared['word_counter']
         char_counter = shared['char_counter']
 
-        # idx偏移两个位置是为了表示NULL和UNK
+        # 下面的word2idx中的词都是要进行训练得到embedding的词
+        # idx偏移两个位置是为了表示NULL和UNK，默认不进行finetune
         if config.finetune:
             # 下面的操作把word2vec_dict存在的词用token来表示
             shared['word2idx'] = {word: idx + 2 for idx, word in
@@ -304,7 +305,7 @@ def read_data(config, data_type, ref, data_filter=None):
             assert config.use_glove_for_unk # True
             shared['word2idx'] = {word: idx + 2 for idx, word in
                                   enumerate(word for word, count in word_counter.items()
-                                            # 高于某个词频 or 没有在glove中出现过
+                                            # 高于某个词频 and 没有在glove中出现过，也就是说低于某个词频但在glove出现过可能仍然要被训练
                                             if count > config.word_count_th and word not in word2vec_dict)}
         shared['char2idx'] = {char: idx + 2 for idx, char in
                               enumerate(char for char, count in char_counter.items()
@@ -323,6 +324,9 @@ def read_data(config, data_type, ref, data_filter=None):
             shared[key] = val
 
     # 构造token到word vector的矩阵
+    # 在basic.model.Model._build_forward中可以看出new_emb_mat的用途
+    # new_emb_mat不会被训练到，它作为每次的输入填入feed_dict，并且被拼接到word_emb_mat后面
+    # 如果某个词在word_emb_mat中没有找到，那么这个词的token等于word_emb_mat的中的词的总偏移再加上new_word2idx中找到的词的token，可以在basic.model.Model.get_feed_dict._get_word中找到如何计算
     if config.use_glove_for_unk:
         # create new word2idx and word2vec
         word2vec_dict = shared['lower_word2vec'] if config.lower_word else shared['word2vec']

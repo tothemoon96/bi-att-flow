@@ -89,7 +89,9 @@ flags.DEFINE_bool("lower_word", True, "lower word [True]")
 flags.DEFINE_bool("squash", False, "squash the sentences into one? [False]")
 flags.DEFINE_bool("swap_memory", True, "swap memory? [True]")
 flags.DEFINE_string("data_filter", "max", "max | valid | semi [max]")
+# 使用glove词向量来表示没有见到过（不用被训练）的词
 flags.DEFINE_bool("use_glove_for_unk", True, "use glove for unk [False]")
+# glove中存在的词不用被训练到
 flags.DEFINE_bool("known_if_glove", True, "consider as known if present in glove [False]")
 flags.DEFINE_string("logit_func", "tri_linear", "logit func [tri_linear]")
 flags.DEFINE_string("answer_func", "linear", "answer logit func [linear]")

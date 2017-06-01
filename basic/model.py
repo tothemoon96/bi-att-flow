@@ -130,37 +130,64 @@ class Model(object):
 
         with tf.variable_scope("emb"):
             if config.use_char_emb:
+                # 在cpu上创建变量
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
                     # VC:字符表的大小
                     # dc:单词的embedding的维度
+                    # todo:没有指定初始化策略
                     char_emb_mat = tf.get_variable("char_emb_mat", shape=[VC, dc], dtype='float')
 
                 with tf.variable_scope("char"):
-                    Acx = tf.nn.embedding_lookup(char_emb_mat, self.cx)  # [N, M, JX, W, dc]
-                    Acq = tf.nn.embedding_lookup(char_emb_mat, self.cq)  # [N, JQ, W, dc]
+                    # [N, M, JX, W, dc]
+                    Acx = tf.nn.embedding_lookup(char_emb_mat, self.cx)
+                    # [N, JQ, W, dc]
+                    Acq = tf.nn.embedding_lookup(char_emb_mat, self.cq)
+                    # 不分句，把句子维度压缩
+                    # Acx:[N*M,JX,W,dc]
                     Acx = tf.reshape(Acx, [-1, JX, W, dc])
                     Acq = tf.reshape(Acq, [-1, JQ, W, dc])
 
+                    # filter的个数
                     filter_sizes = list(map(int, config.out_channel_dims.split(',')))
+                    # filter的大小（卷积核的大小）
                     heights = list(map(int, config.filter_heights.split(',')))
+
+                    # dco:单词embedding之后输出的维度
                     assert sum(filter_sizes) == dco, (filter_sizes, dco)
                     with tf.variable_scope("conv"):
-                        xx = multi_conv1d(Acx, filter_sizes, heights, "VALID",  self.is_train, config.keep_prob, scope="xx")
+                        # 对文档使用char embedding计算word_embedding
+                        xx = multi_conv1d(
+                            Acx,
+                            filter_sizes,
+                            heights,
+                            "VALID",
+                            self.is_train,
+                            config.keep_prob,
+                            scope="xx"
+                        )
                         if config.share_cnn_weights:
+                            # 第一次创建模型时，其父scope没有reuse，下面进行reuse说明是reuse了上面的变量
+                            # 在之后创建模型时，其父scope已经reuse了，下面默认就reuse了
                             tf.get_variable_scope().reuse_variables()
+                            # 对问题使用char embedding计算word_embedding
                             qq = multi_conv1d(Acq, filter_sizes, heights, "VALID", self.is_train, config.keep_prob, scope="xx")
                         else:
+                            # 对问题使用char embedding计算word_embedding
                             qq = multi_conv1d(Acq, filter_sizes, heights, "VALID", self.is_train, config.keep_prob, scope="qq")
+                        # [N,M,JX,filter_size*多少种卷积核]
                         xx = tf.reshape(xx, [-1, M, JX, dco])
+                        # [N,JQ,filter_size*多少种卷积核]
                         qq = tf.reshape(qq, [-1, JQ, dco])
 
             if config.use_word_emb:
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
                     if config.mode == 'train':
+                        # [VW,dw]
                         word_emb_mat = tf.get_variable("word_emb_mat", dtype='float', shape=[VW, dw], initializer=get_initializer(config.emb_mat))
                     else:
                         word_emb_mat = tf.get_variable("word_emb_mat", shape=[VW, dw], dtype='float')
                     if config.use_glove_for_unk:
+                        # [VW+new_emb_mat中词的数目,dw]
                         word_emb_mat = tf.concat(axis=0, values=[word_emb_mat, self.new_emb_mat])
 
                 with tf.name_scope("word"):
