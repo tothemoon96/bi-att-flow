@@ -36,7 +36,6 @@ def linear(args, output_size, bias, bias_start=0.0, scope=None, squeeze=False, w
     # 输入层dropout
     if input_keep_prob < 1.0:
         assert is_train is not None
-        # todo:这里的dropout推断的时候怎么办呢
         flat_args = [
             tf.cond(
                 is_train,
@@ -285,7 +284,6 @@ def conv1d(in_, filter_size, height, padding, is_train=None, keep_prob=1.0, scop
         bias = tf.get_variable("bias", shape=[filter_size], dtype='float')
         strides = [1, 1, 1, 1]
         # 如果是训练and启用了Dropout，那么就在输入层进行Dropout
-        # todo:在推断过程中模型是不是要乘以一个系数呢
         if is_train is not None and keep_prob < 1.0:
             in_ = dropout(in_, keep_prob, is_train)
         # xxc:[N*M,JX,W-height+1,filter_size]

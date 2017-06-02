@@ -197,8 +197,10 @@ class Model(object):
                     # [N,JQ,dw]
                     Aq = tf.nn.embedding_lookup(word_emb_mat, self.q)
                     # [N,M,JX,dw]
+                    # 问题的word embedding
                     self.tensor_dict['x'] = Ax
                     # [N,JQ,dw]
+                    # 答案的word embedding
                     self.tensor_dict['q'] = Aq
                 if config.use_char_emb:
                     # [N,M,JX,dw+dco]
@@ -211,7 +213,7 @@ class Model(object):
 
         # highway network
         if config.highway:
-            # config.highway_num_layers个high way线性层
+            # config.highway_num_layers个high way线性层，不改变shape
             with tf.variable_scope("highway"):
                 xx = highway_network(
                     xx,
@@ -229,30 +231,41 @@ class Model(object):
                     is_train=self.is_train
                 )
 
+        # 问题对后续网络层的输入
         self.tensor_dict['xx'] = xx
+        # 答案对后续网络层的输入
         self.tensor_dict['qq'] = qq
 
+        # d:隐含层单元数目
         cell_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell_bw = BasicLSTMCell(d, state_is_tuple=True)
         d_cell_fw = SwitchableDropoutWrapper(cell_fw, self.is_train, input_keep_prob=config.input_keep_prob)
         d_cell_bw = SwitchableDropoutWrapper(cell_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+
         cell2_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell2_bw = BasicLSTMCell(d, state_is_tuple=True)
         d_cell2_fw = SwitchableDropoutWrapper(cell2_fw, self.is_train, input_keep_prob=config.input_keep_prob)
         d_cell2_bw = SwitchableDropoutWrapper(cell2_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+
         cell3_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell3_bw = BasicLSTMCell(d, state_is_tuple=True)
         d_cell3_fw = SwitchableDropoutWrapper(cell3_fw, self.is_train, input_keep_prob=config.input_keep_prob)
         d_cell3_bw = SwitchableDropoutWrapper(cell3_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+
         cell4_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell4_bw = BasicLSTMCell(d, state_is_tuple=True)
         d_cell4_fw = SwitchableDropoutWrapper(cell4_fw, self.is_train, input_keep_prob=config.input_keep_prob)
         d_cell4_bw = SwitchableDropoutWrapper(cell4_bw, self.is_train, input_keep_prob=config.input_keep_prob)
-        x_len = tf.reduce_sum(tf.cast(self.x_mask, 'int32'), 2)  # [N, M]
-        q_len = tf.reduce_sum(tf.cast(self.q_mask, 'int32'), 1)  # [N]
+
+        # [N,M]，某一个句子有多长
+        x_len = tf.reduce_sum(tf.cast(self.x_mask, 'int32'), 2)
+        # [N]，某一个问题有多长
+        q_len = tf.reduce_sum(tf.cast(self.q_mask, 'int32'), 1)
 
         with tf.variable_scope("prepro"):
-            (fw_u, bw_u), ((_, fw_u_f), (_, bw_u_f)) = bidirectional_dynamic_rnn(d_cell_fw, d_cell_bw, qq, q_len, dtype='float', scope='u1')  # [N, J, d], [N, d]
+            (fw_u, bw_u), ((_, fw_u_f), (_, bw_u_f)) = bidirectional_dynamic_rnn(
+                d_cell_fw, d_cell_bw, qq, q_len, dtype='float', scope='u1'
+            )  # [N, J, d], [N, d]
             u = tf.concat(axis=2, values=[fw_u, bw_u])
             if config.share_lstm_weights:
                 tf.get_variable_scope().reuse_variables()
