@@ -334,13 +334,11 @@ def read_data(config, data_type, ref, data_filter=None):
         # todo:这个new_word2idx_dict出现的token似乎是不用被训练的token的embedding
         new_word2idx_dict = {word: idx for idx, word in enumerate(word for word in word2vec_dict.keys() if word not in shared['word2idx'])}
         shared['new_word2idx'] = new_word2idx_dict
-        # 这个没用
-        offset = len(shared['word2idx'])
-        # 下面这两句似乎也没用
-        word2vec_dict = shared['lower_word2vec'] if config.lower_word else shared['word2vec']
-        new_word2idx_dict = shared['new_word2idx']
         # 构造{token:word vector}字典
-        idx2vec_dict = {idx: word2vec_dict[word] for word, idx in new_word2idx_dict.items()}
+        idx2vec_dict = {
+            idx: word2vec_dict[word]
+            for word, idx in new_word2idx_dict.items()
+        }
         # print("{}/{} unique words have corresponding glove vectors.".format(len(idx2vec_dict), len(word2idx_dict)))
         new_emb_mat = np.array([idx2vec_dict[idx] for idx in range(len(idx2vec_dict))], dtype='float32')
         shared['new_emb_mat'] = new_emb_mat

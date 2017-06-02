@@ -148,6 +148,7 @@ class Model(object):
                     Acq = tf.reshape(Acq, [-1, JQ, W, dc])
 
                     # filter的个数
+                    # config.out_channel_dims中每个元素加起来的和要等于config.char_out_size
                     filter_sizes = list(map(int, config.out_channel_dims.split(',')))
                     # filter的大小（卷积核的大小）
                     heights = list(map(int, config.filter_heights.split(',')))
@@ -174,9 +175,9 @@ class Model(object):
                         else:
                             # 对问题使用char embedding计算word_embedding
                             qq = multi_conv1d(Acq, filter_sizes, heights, "VALID", self.is_train, config.keep_prob, scope="qq")
-                        # [N,M,JX,filter_size*多少种卷积核]
+                        # [N,M,JX,filter_size*多少种卷积核（dco）]
                         xx = tf.reshape(xx, [-1, M, JX, dco])
-                        # [N,JQ,filter_size*多少种卷积核]
+                        # [N,JQ,filter_size*多少种卷积核（dco）]
                         qq = tf.reshape(qq, [-1, JQ, dco])
 
             if config.use_word_emb:
@@ -191,23 +192,42 @@ class Model(object):
                         word_emb_mat = tf.concat(axis=0, values=[word_emb_mat, self.new_emb_mat])
 
                 with tf.name_scope("word"):
-                    Ax = tf.nn.embedding_lookup(word_emb_mat, self.x)  # [N, M, JX, d]
-                    Aq = tf.nn.embedding_lookup(word_emb_mat, self.q)  # [N, JQ, d]
+                    # [N,M,JX,dw]
+                    Ax = tf.nn.embedding_lookup(word_emb_mat, self.x)
+                    # [N,JQ,dw]
+                    Aq = tf.nn.embedding_lookup(word_emb_mat, self.q)
+                    # [N,M,JX,dw]
                     self.tensor_dict['x'] = Ax
+                    # [N,JQ,dw]
                     self.tensor_dict['q'] = Aq
                 if config.use_char_emb:
-                    xx = tf.concat(axis=3, values=[xx, Ax])  # [N, M, JX, di]
-                    qq = tf.concat(axis=2, values=[qq, Aq])  # [N, JQ, di]
+                    # [N,M,JX,dw+dco]
+                    xx = tf.concat(axis=3, values=[xx, Ax])
+                    # [N,JQ,dw+dco]
+                    qq = tf.concat(axis=2, values=[qq, Aq])
                 else:
                     xx = Ax
                     qq = Aq
 
         # highway network
         if config.highway:
+            # config.highway_num_layers个high way线性层
             with tf.variable_scope("highway"):
-                xx = highway_network(xx, config.highway_num_layers, True, wd=config.wd, is_train=self.is_train)
+                xx = highway_network(
+                    xx,
+                    config.highway_num_layers,
+                    True,
+                    wd=config.wd,
+                    is_train=self.is_train
+                )
                 tf.get_variable_scope().reuse_variables()
-                qq = highway_network(qq, config.highway_num_layers, True, wd=config.wd, is_train=self.is_train)
+                qq = highway_network(
+                    qq,
+                    config.highway_num_layers,
+                    True,
+                    wd=config.wd,
+                    is_train=self.is_train
+                )
 
         self.tensor_dict['xx'] = xx
         self.tensor_dict['qq'] = qq

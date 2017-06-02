@@ -120,21 +120,63 @@ def exp_mask(val, mask, name=None):
 
 
 def flatten(tensor, keep):
+    '''
+    修改shape，保留后面keep个轴，将前面几个轴压缩起来
+    :param tensor:一个tensor
+    :param keep:要保留后面几个轴
+    :return:reshape的结果
+    '''
     fixed_shape = tensor.get_shape().as_list()
+    # 取前几个轴
     start = len(fixed_shape) - keep
-    left = reduce(mul, [fixed_shape[i] or tf.shape(tensor)[i] for i in range(start)])
-    out_shape = [left] + [fixed_shape[i] or tf.shape(tensor)[i] for i in range(start, len(fixed_shape))]
+    # 将前几个轴的shape乘起来
+    # 如[2,3,2,3,5]，取前4个轴，keep->1
+    # 结果:2*3*2*3=36
+    left = reduce(
+        mul,
+        [
+            fixed_shape[i] or tf.shape(tensor)[i]
+            for i in range(start)
+        ]
+    )
+    # 拼接上后面的轴的shape
+    # 继续上面的例子:[36,5]
+    out_shape = [left] + \
+                [
+                    fixed_shape[i] or tf.shape(tensor)[i]
+                    for i in range(start, len(fixed_shape))
+                ]
     flat = tf.reshape(tensor, out_shape)
     return flat
 
 
 def reconstruct(tensor, ref, keep):
+    '''
+    使用ref的除后面keep个轴的前面的轴和tensor的后面keep个轴组合起来，重建tensor
+    举个例子:
+    tensor->[10,2]
+    ref->[2,5,2]
+    keep->1
+    返回[2,5,2]
+    :param tensor: 需要重建shape的tensor
+    :param ref: 要参考的重建shape
+    :param keep: 要保留后面几个轴
+    :return:重建后的结果
+    '''
     ref_shape = ref.get_shape().as_list()
     tensor_shape = tensor.get_shape().as_list()
     ref_stop = len(ref_shape) - keep
     tensor_start = len(tensor_shape) - keep
-    pre_shape = [ref_shape[i] or tf.shape(ref)[i] for i in range(ref_stop)]
-    keep_shape = [tensor_shape[i] or tf.shape(tensor)[i] for i in range(tensor_start, len(tensor_shape))]
+    # ref的前面几个shape
+    pre_shape = [
+        ref_shape[i] or tf.shape(ref)[i]
+        for i in range(ref_stop)
+    ]
+    # tensor的后面几个shape
+    keep_shape = [
+        tensor_shape[i] or tf.shape(tensor)[i]
+        for i in range(tensor_start, len(tensor_shape))
+    ]
     # pre_shape = [tf.shape(ref)[i] for i in range(len(ref.get_shape().as_list()[:-keep]))]
     # keep_shape = tensor.get_shape().as_list()[-keep:]
     target_shape = pre_shape + keep_shape
@@ -143,11 +185,22 @@ def reconstruct(tensor, ref, keep):
 
 
 def add_wd(wd, scope=None):
+    '''
+    得到某个scope中可以训练的变量的l2范数，乘上wd，添加到losses集合中去
+    :param wd:L2正则化系数
+    :param scope:变量的scope
+    :return:
+    '''
     scope = scope or tf.get_variable_scope().name
     variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
     with tf.name_scope("weight_decay"):
+        # 对于该scope中可以训练的变量中的每一个
         for var in variables:
-            weight_decay = tf.multiply(tf.nn.l2_loss(var), wd, name="{}/wd".format(var.op.name))
+            weight_decay = tf.multiply(
+                tf.nn.l2_loss(var),
+                wd,
+                name="{}/wd".format(var.op.name)
+            )
             tf.add_to_collection('losses', weight_decay)
 
 

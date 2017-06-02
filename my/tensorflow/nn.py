@@ -7,20 +7,52 @@ from my.tensorflow import flatten, reconstruct, add_wd, exp_mask
 
 def linear(args, output_size, bias, bias_start=0.0, scope=None, squeeze=False, wd=0.0, input_keep_prob=1.0,
            is_train=None):
-    if args is None or (nest.is_sequence(args) and not args):
+    '''
+    经过一个线性层，没有激活函数
+    :param args:输入的tensor或者tensor的list
+    :param output_size:输出的单元大小
+    :param bias:是否有bias
+    :param bias_start:bias的初始值
+    :param scope:变量存放的scope
+    :param squeeze:是否移除掉最后一个为shape为1的轴
+    :param wd:L2正则化系数
+    :param input_keep_prob:输入的Dropout
+    :param is_train:是否是训练状态，和Dropout有关
+    :return:shape的前面几个轴和args一样，最后一个轴由output_size决定，如果squeeze为True，那么移除掉最后一个shape为1的轴
+    '''
+    # not args->args是空值或者None是为True
+    if args is None or \
+            (nest.is_sequence(args) and not args):
         raise ValueError("`args` must be specified")
+    # 如果args不是一个list，那么必须要把args转换成一个list，并且args不能为空值
+    # 内置的_linear只能接受这样的参数
     if not nest.is_sequence(args):
         args = [args]
 
-    flat_args = [flatten(arg, 1) for arg in args]
+    flat_args = [
+        flatten(arg, 1) for arg in args
+    ]
+
+    # 输入层dropout
     if input_keep_prob < 1.0:
         assert is_train is not None
-        flat_args = [tf.cond(is_train, lambda: tf.nn.dropout(arg, input_keep_prob), lambda: arg)
-                     for arg in flat_args]
+        # todo:这里的dropout推断的时候怎么办呢
+        flat_args = [
+            tf.cond(
+                is_train,
+                lambda: tf.nn.dropout(arg, input_keep_prob),
+                lambda: arg
+            )
+            for arg in flat_args
+        ]
+
+    # 经过内部的线性层
     with tf.variable_scope(scope or 'Linear'):
+        # todo:里面Weight该怎么初始化呢
         flat_out = _linear(flat_args, output_size, bias, bias_start=bias_start)
     out = reconstruct(flat_out, args[0], 1)
     if squeeze:
+        # 移除掉最后一个为shape为1的轴
         out = tf.squeeze(out, [len(args[0].get_shape().as_list())-1])
     if wd:
         add_wd(wd)
@@ -144,23 +176,84 @@ def get_logits(args, size, bias, bias_start=0.0, scope=None, mask=None, wd=0.0, 
 
 
 def highway_layer(arg, bias, bias_start=0.0, scope=None, wd=0.0, input_keep_prob=1.0, is_train=None):
+    '''
+    gate使用sigmoid激活，传统网络使用relu激活
+    :param arg:网络的输入
+    :param bias:是否有偏置
+    :param bias_start:偏置的初始值
+    :param scope:variable_scope的名字
+    :param wd:l2正则化系数
+    :param input_keep_prob:每层highway network输入处有Dropout
+    :param is_train:是否在训练，和dropout有关
+    :return:输出的shape和输入的shape相同
+    '''
     with tf.variable_scope(scope or "highway_layer"):
         d = arg.get_shape()[-1]
-        trans = linear([arg], d, bias, bias_start=bias_start, scope='trans', wd=wd, input_keep_prob=input_keep_prob, is_train=is_train)
+        trans = linear(
+            [arg],
+            d,
+            bias,
+            bias_start=bias_start,
+            scope='trans',
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
         trans = tf.nn.relu(trans)
-        gate = linear([arg], d, bias, bias_start=bias_start, scope='gate', wd=wd, input_keep_prob=input_keep_prob, is_train=is_train)
+        gate = linear(
+            [arg],
+            d,
+            bias,
+            bias_start=bias_start,
+            scope='gate',
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
         gate = tf.nn.sigmoid(gate)
         out = gate * trans + (1 - gate) * arg
         return out
 
 
-def highway_network(arg, num_layers, bias, bias_start=0.0, scope=None, wd=0.0, input_keep_prob=1.0, is_train=None):
+def highway_network(
+        arg,
+        num_layers,
+        bias,
+        bias_start=0.0,
+        scope=None,
+        wd=0.0,
+        input_keep_prob=1.0,
+        is_train=None
+):
+    '''
+    封装了多层的highway network
+    :param arg:输入
+    :param num_layers:需要多少层
+    :param bias:是否有偏置
+    :param bias_start:偏置的初始值
+    :param scope:变量的variable_scope名字
+    :param wd:l2正则化系数
+    :param input_keep_prob:每层highway network输入处有Dropout
+    :param is_train:是否在训练，和dropout有关
+    :return: 最后一层highway network的输出，输出的shape和输入的shape相同
+    '''
     with tf.variable_scope(scope or "highway_network"):
+        # 当前层的输入
         prev = arg
+        # 当前层的输出
         cur = None
+        # 对每一层
         for layer_idx in range(num_layers):
-            cur = highway_layer(prev, bias, bias_start=bias_start, scope="layer_{}".format(layer_idx), wd=wd,
-                                input_keep_prob=input_keep_prob, is_train=is_train)
+            # 当前层的输出
+            cur = highway_layer(
+                prev,
+                bias,
+                bias_start=bias_start,
+                scope="layer_{}".format(layer_idx),
+                wd=wd,
+                input_keep_prob=input_keep_prob,
+                is_train=is_train
+            )
             prev = cur
         return cur
 
@@ -173,11 +266,11 @@ def conv1d(in_, filter_size, height, padding, is_train=None, keep_prob=1.0, scop
     :param in_:[N*M,JX,W,dc]
     :param filter_size:有多少个卷积核
     :param height:卷积核的大小
-    :param padding:
+    :param padding:'VALID'或者'SAME'
     :param is_train:是否是训练状态，与Dropout有关
-    :param keep_prob:
-    :param scope:[N*M,JX,filter_size]
-    :return:
+    :param keep_prob:输入的Dropout
+    :param scope:变量的scope
+    :return:[N*M,JX,filter_size]
     '''
     with tf.variable_scope(scope or "conv1d"):
         # num_channels:单词的embedding的维度
@@ -209,10 +302,10 @@ def multi_conv1d(in_, filter_sizes, heights, padding, is_train=None, keep_prob=1
     :param in_:[N*M,JX,W,dc]
     :param filter_sizes:不同大小的卷积核每种需要多少个的list
     :param heights:不同大小的卷积核的list
-    :param padding:
+    :param padding:'VALID'或者'SAME'
     :param is_train:是否是训练状态，与Dropout有关
-    :param keep_prob:
-    :param scope:
+    :param keep_prob:输入的Dropout
+    :param scope:变量的scope
     :return:[N*M,JX,filter_size*多少种卷积核]
     '''
     with tf.variable_scope(scope or "multi_conv1d"):

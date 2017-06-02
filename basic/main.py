@@ -75,9 +75,12 @@ def _train(config):
     word2vec_dict = \
         train_data.shared['lower_word2vec'] if config.lower_word else train_data.shared['word2vec']
     word2idx_dict = train_data.shared['word2idx']
-    idx2vec_dict = {word2idx_dict[word]: vec for word, vec in word2vec_dict.items()
-                    # word同时在word2idx_dict和word2vec_dict中存在
-                    if word in word2idx_dict}
+    idx2vec_dict = {
+        word2idx_dict[word]:
+            vec for word, vec in word2vec_dict.items()
+        # word同时在word2idx_dict和word2vec_dict中存在
+        if word in word2idx_dict
+    }
     # todo:这个矩阵应该是要训练的word embedding矩阵了
     emb_mat = np.array([
         idx2vec_dict[idx]
