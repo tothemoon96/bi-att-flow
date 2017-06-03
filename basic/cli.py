@@ -53,7 +53,9 @@ flags.DEFINE_string("filter_heights", "5", "Filter heights of Char-CNN, separate
 flags.DEFINE_bool("finetune", False, "Finetune word embeddings? [False]")
 flags.DEFINE_bool("highway", True, "Use highway? [True]")
 flags.DEFINE_integer("highway_num_layers", 2, "highway num layers [2]")
+# Character Embedding Layer
 flags.DEFINE_bool("share_cnn_weights", True, "Share Char-CNN weights [True]")
+# Contextual Embedding Layer
 flags.DEFINE_bool("share_lstm_weights", True, "Share pre-processing (phrase-level) LSTM weights [True]")
 flags.DEFINE_float("var_decay", 0.999, "Exponential moving average decay for variables [0.999]")
 

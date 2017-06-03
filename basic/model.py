@@ -166,6 +166,7 @@ class Model(object):
                             config.keep_prob,
                             scope="xx"
                         )
+                        # 使用文章的char embedding的参数进行问题的char embedding
                         if config.share_cnn_weights:
                             # 第一次创建模型时，其父scope没有reuse，下面进行reuse说明是reuse了上面的变量
                             # 在之后创建模型时，其父scope已经reuse了，下面默认就reuse了
@@ -208,7 +209,9 @@ class Model(object):
                     # [N,JQ,dw+dco]
                     qq = tf.concat(axis=2, values=[qq, Aq])
                 else:
+                    # [N,M,JX,dw]
                     xx = Ax
+                    # [N,JQ,dw]
                     qq = Aq
 
         # highway network
@@ -237,25 +240,59 @@ class Model(object):
         self.tensor_dict['qq'] = qq
 
         # d:隐含层单元数目
+        # 构造双向RNN的基本单元
+        # fw是前向，bw是后向
         cell_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell_bw = BasicLSTMCell(d, state_is_tuple=True)
-        d_cell_fw = SwitchableDropoutWrapper(cell_fw, self.is_train, input_keep_prob=config.input_keep_prob)
-        d_cell_bw = SwitchableDropoutWrapper(cell_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+        d_cell_fw = SwitchableDropoutWrapper(
+            cell_fw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
+        d_cell_bw = SwitchableDropoutWrapper(
+            cell_bw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
 
         cell2_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell2_bw = BasicLSTMCell(d, state_is_tuple=True)
-        d_cell2_fw = SwitchableDropoutWrapper(cell2_fw, self.is_train, input_keep_prob=config.input_keep_prob)
-        d_cell2_bw = SwitchableDropoutWrapper(cell2_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+        d_cell2_fw = SwitchableDropoutWrapper(
+            cell2_fw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
+        d_cell2_bw = SwitchableDropoutWrapper(
+            cell2_bw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
 
         cell3_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell3_bw = BasicLSTMCell(d, state_is_tuple=True)
-        d_cell3_fw = SwitchableDropoutWrapper(cell3_fw, self.is_train, input_keep_prob=config.input_keep_prob)
-        d_cell3_bw = SwitchableDropoutWrapper(cell3_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+        d_cell3_fw = SwitchableDropoutWrapper(
+            cell3_fw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
+        d_cell3_bw = SwitchableDropoutWrapper(
+            cell3_bw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
 
         cell4_fw = BasicLSTMCell(d, state_is_tuple=True)
         cell4_bw = BasicLSTMCell(d, state_is_tuple=True)
-        d_cell4_fw = SwitchableDropoutWrapper(cell4_fw, self.is_train, input_keep_prob=config.input_keep_prob)
-        d_cell4_bw = SwitchableDropoutWrapper(cell4_bw, self.is_train, input_keep_prob=config.input_keep_prob)
+        d_cell4_fw = SwitchableDropoutWrapper(
+            cell4_fw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
+        d_cell4_bw = SwitchableDropoutWrapper(
+            cell4_bw,
+            self.is_train,
+            input_keep_prob=config.input_keep_prob
+        )
 
         # [N,M]，某一个句子有多长
         x_len = tf.reduce_sum(tf.cast(self.x_mask, 'int32'), 2)
@@ -263,18 +300,38 @@ class Model(object):
         q_len = tf.reduce_sum(tf.cast(self.q_mask, 'int32'), 1)
 
         with tf.variable_scope("prepro"):
-            (fw_u, bw_u), ((_, fw_u_f), (_, bw_u_f)) = bidirectional_dynamic_rnn(
+            # qq:[N,JQ,dw+dco]，如果使用char_embedding和word_embedding
+            # ([N,J,d],[N,J,d])
+            (fw_u, bw_u), \
+            (
+                (_, fw_u_f),# 前向的最终状态的hidden:[N,d]
+                (_, bw_u_f) # 后向的最终状态的hidden:[N,d]
+            ) = bidirectional_dynamic_rnn(
                 d_cell_fw, d_cell_bw, qq, q_len, dtype='float', scope='u1'
-            )  # [N, J, d], [N, d]
+            )
+            # u:[N,J,2d]，将前向和后向的隐含层拼接起来
             u = tf.concat(axis=2, values=[fw_u, bw_u])
+            # 复用问题的Contextual Embedding的权重对文章编码
             if config.share_lstm_weights:
+                # 父variable scope reuse了，子variable scope也会reuse
                 tf.get_variable_scope().reuse_variables()
-                (fw_h, bw_h), _ = bidirectional_dynamic_rnn(cell_fw, cell_bw, xx, x_len, dtype='float', scope='u1')  # [N, M, JX, 2d]
+                # xx:[N,M,JX,dw+dco]，如果使用char_embedding和word_embedding
+                # fw_h,bw_h:[N,M,JX,d]
+                (fw_h, bw_h), _ = bidirectional_dynamic_rnn(
+                    cell_fw, cell_bw, xx, x_len, dtype='float', scope='u1'
+                )
+                # h:[N,M,JX,2d]
                 h = tf.concat(axis=3, values=[fw_h, bw_h])  # [N, M, JX, 2d]
+            # 不复用问题的Contextual Embedding的权重对文章编码
             else:
-                (fw_h, bw_h), _ = bidirectional_dynamic_rnn(cell_fw, cell_bw, xx, x_len, dtype='float', scope='h1')  # [N, M, JX, 2d]
+                (fw_h, bw_h), _ = bidirectional_dynamic_rnn(
+                    cell_fw, cell_bw, xx, x_len, dtype='float', scope='h1'
+                )
+                # h:[N,M,JX,2d]
                 h = tf.concat(axis=3, values=[fw_h, bw_h])  # [N, M, JX, 2d]
+            # 问题中没个词的编码，[N,J,2d]
             self.tensor_dict['u'] = u
+            # 文章中每个词的编码，[N,M,JX,2d]
             self.tensor_dict['h'] = h
 
         with tf.variable_scope("main"):
