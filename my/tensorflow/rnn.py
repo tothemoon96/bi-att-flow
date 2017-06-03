@@ -64,7 +64,7 @@ def bidirectional_dynamic_rnn(cell_fw, cell_bw, inputs, sequence_length=None,
     # 不打开time_major
     assert not time_major
     # flat_inputs的几种情况
-    # qq:[N,J,dw+dco]，如果使用char_embedding和word_embedding
+    # qq:[N,JQ,dw+dco]，如果使用char_embedding和word_embedding
     # xx:[N*M,JX,dw+dco]，如果使用char_embedding和word_embedding
     flat_inputs = flatten(inputs, 2)
 
@@ -95,7 +95,7 @@ def bidirectional_dynamic_rnn(cell_fw, cell_bw, inputs, sequence_length=None,
         )
 
     # fw_outputs和bw_outputs的几种情况
-    # qq:[N,J,d]
+    # qq:[N,JQ,d]
     # xx:[N,M,JX,d]
     # 每个time step下前向网络和后向网络的输出
     fw_outputs = reconstruct(flat_fw_outputs, inputs, 2)

@@ -129,6 +129,7 @@ class Model(object):
         dc, dw, dco = config.char_emb_size, config.word_emb_size, config.char_out_size
 
         with tf.variable_scope("emb"):
+            # Character Embedding Layer
             if config.use_char_emb:
                 # 在cpu上创建变量
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
@@ -181,6 +182,7 @@ class Model(object):
                         # [N,JQ,filter_size*多少种卷积核（dco）]
                         qq = tf.reshape(qq, [-1, JQ, dco])
 
+            # Word Embedding Layer
             if config.use_word_emb:
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
                     if config.mode == 'train':
@@ -214,7 +216,7 @@ class Model(object):
                     # [N,JQ,dw]
                     qq = Aq
 
-        # highway network
+        # Highway Network
         if config.highway:
             # config.highway_num_layers个high way线性层，不改变shape
             with tf.variable_scope("highway"):
@@ -299,9 +301,10 @@ class Model(object):
         # [N]，某一个问题有多长
         q_len = tf.reduce_sum(tf.cast(self.q_mask, 'int32'), 1)
 
+        # Contextual Embedding Layer
         with tf.variable_scope("prepro"):
             # qq:[N,JQ,dw+dco]，如果使用char_embedding和word_embedding
-            # ([N,J,d],[N,J,d])
+            # ([N,JQ,d],[N,JQ,d])
             (fw_u, bw_u), \
             (
                 (_, fw_u_f),# 前向的最终状态的hidden:[N,d]
@@ -309,7 +312,7 @@ class Model(object):
             ) = bidirectional_dynamic_rnn(
                 d_cell_fw, d_cell_bw, qq, q_len, dtype='float', scope='u1'
             )
-            # u:[N,J,2d]，将前向和后向的隐含层拼接起来
+            # u:[N,JQ,2d]，将前向和后向的隐含层拼接起来
             u = tf.concat(axis=2, values=[fw_u, bw_u])
             # 复用问题的Contextual Embedding的权重对文章编码
             if config.share_lstm_weights:
@@ -329,24 +332,65 @@ class Model(object):
                 )
                 # h:[N,M,JX,2d]
                 h = tf.concat(axis=3, values=[fw_h, bw_h])  # [N, M, JX, 2d]
-            # 问题中没个词的编码，[N,J,2d]
+            # 问题中每个词的编码，[N,JQ,2d]
             self.tensor_dict['u'] = u
             # 文章中每个词的编码，[N,M,JX,2d]
             self.tensor_dict['h'] = h
 
+        # Attention Flow Layer
         with tf.variable_scope("main"):
             if config.dynamic_att:
                 p0 = h
-                u = tf.reshape(tf.tile(tf.expand_dims(u, 1), [1, M, 1, 1]), [N * M, JQ, 2 * d])
-                q_mask = tf.reshape(tf.tile(tf.expand_dims(self.q_mask, 1), [1, M, 1]), [N * M, JQ])
-                first_cell_fw = AttentionCell(cell2_fw, u, mask=q_mask, mapper='sim',
-                                              input_keep_prob=self.config.input_keep_prob, is_train=self.is_train)
-                first_cell_bw = AttentionCell(cell2_bw, u, mask=q_mask, mapper='sim',
-                                              input_keep_prob=self.config.input_keep_prob, is_train=self.is_train)
-                second_cell_fw = AttentionCell(cell3_fw, u, mask=q_mask, mapper='sim',
-                                            input_keep_prob=self.config.input_keep_prob, is_train=self.is_train)
-                second_cell_bw = AttentionCell(cell3_bw, u, mask=q_mask, mapper='sim',
-                                               input_keep_prob=self.config.input_keep_prob, is_train=self.is_train)
+                # u:[N*M,JQ,2d]，每个样本点中问题的编码重复了M遍
+                u = tf.reshape(
+                    # [N,M,JQ,2d]
+                    tf.tile(
+                        tf.expand_dims(u, 1),# [N,1,JQ,2d]
+                        [1, M, 1, 1]
+                    ),
+                    [N * M, JQ, 2 * d]
+                )
+                # q_mask:[N,M,JQ]，每个样本点中问题的有效词mask重复了M遍
+                q_mask = tf.reshape(
+                    # [N,M,JQ]
+                    tf.tile(
+                        tf.expand_dims(self.q_mask, 1),#[N,1,JQ]
+                        [1, M, 1]
+                    ),
+                    [N * M, JQ]
+                )
+                first_cell_fw = AttentionCell(
+                    cell2_fw,
+                    u,
+                    mask=q_mask,
+                    mapper='sim',
+                    input_keep_prob=self.config.input_keep_prob,
+                    is_train=self.is_train
+                )
+                first_cell_bw = AttentionCell(
+                    cell2_bw,
+                    u,
+                    mask=q_mask,
+                    mapper='sim',
+                    input_keep_prob=self.config.input_keep_prob,
+                    is_train=self.is_train
+                )
+                second_cell_fw = AttentionCell(
+                    cell3_fw,
+                    u,
+                    mask=q_mask,
+                    mapper='sim',
+                    input_keep_prob=self.config.input_keep_prob,
+                    is_train=self.is_train
+                )
+                second_cell_bw = AttentionCell(
+                    cell3_bw,
+                    u,
+                    mask=q_mask,
+                    mapper='sim',
+                    input_keep_prob=self.config.input_keep_prob,
+                    is_train=self.is_train
+                )
             else:
                 p0 = attention_layer(config, self.is_train, h, u, h_mask=self.x_mask, u_mask=self.q_mask, scope="p0", tensor_dict=self.tensor_dict)
                 first_cell_fw = d_cell2_fw

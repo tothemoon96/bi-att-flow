@@ -151,10 +151,15 @@ class AttentionCell(RNNCell):
         self._cell = cell
         self._memory = memory
         self._mask = mask
+        # [N*M，JQ,2d]
         self._flat_memory = flatten(memory, 2)
+        # [N,M,JQ]
         self._flat_mask = flatten(mask, 1)
         if controller is None:
-            controller = AttentionCell.get_linear_controller(True, is_train=is_train)
+            controller = AttentionCell.get_linear_controller(
+                True,
+                is_train=is_train
+            )
         self._controller = controller
         if mapper is None:
             mapper = AttentionCell.get_concat_mapper()
