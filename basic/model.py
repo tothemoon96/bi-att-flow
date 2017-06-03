@@ -398,18 +398,20 @@ class Model(object):
                 first_cell_bw = d_cell2_bw
                 second_cell_bw = d_cell3_bw
 
-            (fw_g0, bw_g0), _ = bidirectional_dynamic_rnn(first_cell_fw, first_cell_bw, p0, x_len, dtype='float', scope='g0')  # [N, M, JX, 2d]
+            # [N, M, JX, 2d]
+            (fw_g0, bw_g0), _ = bidirectional_dynamic_rnn(first_cell_fw, first_cell_bw, p0, x_len, dtype='float', scope='g0')
             g0 = tf.concat(axis=3, values=[fw_g0, bw_g0])
-            (fw_g1, bw_g1), _ = bidirectional_dynamic_rnn(second_cell_fw, second_cell_bw, g0, x_len, dtype='float', scope='g1')  # [N, M, JX, 2d]
+            # [N, M, JX, 2d]
+            (fw_g1, bw_g1), _ = bidirectional_dynamic_rnn(second_cell_fw, second_cell_bw, g0, x_len, dtype='float', scope='g1')
             g1 = tf.concat(axis=3, values=[fw_g1, bw_g1])
 
             logits = get_logits([g1, p0], d, True, wd=config.wd, input_keep_prob=config.input_keep_prob,
                                 mask=self.x_mask, is_train=self.is_train, func=config.answer_func, scope='logits1')
             a1i = softsel(tf.reshape(g1, [N, M * JX, 2 * d]), tf.reshape(logits, [N, M * JX]))
             a1i = tf.tile(tf.expand_dims(tf.expand_dims(a1i, 1), 1), [1, M, JX, 1])
-
+            # [N, M, JX, 2d]
             (fw_g2, bw_g2), _ = bidirectional_dynamic_rnn(d_cell4_fw, d_cell4_bw, tf.concat(axis=3, values=[p0, g1, a1i, g1 * a1i]),
-                                                          x_len, dtype='float', scope='g2')  # [N, M, JX, 2d]
+                                                          x_len, dtype='float', scope='g2')
             g2 = tf.concat(axis=3, values=[fw_g2, bw_g2])
             logits2 = get_logits([g2, p0], d, True, wd=config.wd, input_keep_prob=config.input_keep_prob,
                                  mask=self.x_mask,

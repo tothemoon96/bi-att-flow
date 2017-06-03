@@ -80,6 +80,13 @@ def dropout(x, keep_prob, is_train, noise_shape=None, seed=None, name=None):
 
 
 def softmax(logits, mask=None, scope=None):
+    '''
+    对最后一个轴计算softmax
+    :param logits:
+    :param mask:Tensor，和logits相同的shape，False表示要被mask掉
+    :param scope:
+    :return:
+    '''
     with tf.name_scope(scope or "Softmax"):
         if mask is not None:
             logits = exp_mask(logits, mask)
@@ -102,7 +109,10 @@ def softsel(target, logits, mask=None, scope=None):
     with tf.name_scope(scope or "Softsel"):
         a = softmax(logits, mask=mask)
         target_rank = len(target.get_shape().as_list())
-        out = tf.reduce_sum(tf.expand_dims(a, -1) * target, target_rank - 2)
+        out = tf.reduce_sum(
+            tf.expand_dims(a, -1) * target,
+            target_rank - 2
+        )
         return out
 
 

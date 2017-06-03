@@ -142,18 +142,18 @@ class AttentionCell(RNNCell):
     def __init__(self, cell, memory, mask=None, controller=None, mapper=None, input_keep_prob=1.0, is_train=None):
         """
         Early fusion attention cell: uses the (inputs, state) to control the current attention.
-
+        我将根据它第一次在代码中出现的位置来推断输入输出的shape
         :param cell:
-        :param memory: [N, M, m]
+        :param memory: [N,M,JQ,2d]
         :param mask:
         :param controller: (inputs, prev_state, memory) -> memory_logits
         """
         self._cell = cell
         self._memory = memory
         self._mask = mask
-        # [N*M，JQ,2d]
+        # [N*M,JQ,2d]
         self._flat_memory = flatten(memory, 2)
-        # [N,M,JQ]
+        # [N*M,JQ]
         self._flat_mask = flatten(mask, 1)
         if controller is None:
             controller = AttentionCell.get_linear_controller(
@@ -211,17 +211,47 @@ class AttentionCell(RNNCell):
     @staticmethod
     def get_linear_controller(bias, input_keep_prob=1.0, is_train=None):
         def linear_controller(inputs, state, memory):
-            rank = len(memory.get_shape())
-            _memory_size = tf.shape(memory)[rank-2]
-            tiled_inputs = tf.tile(tf.expand_dims(inputs, 1), [1, _memory_size, 1])
-            if isinstance(state, tuple):
-                tiled_states = [tf.tile(tf.expand_dims(each, 1), [1, _memory_size, 1])
-                                for each in state]
-            else:
-                tiled_states = [tf.tile(tf.expand_dims(state, 1), [1, _memory_size, 1])]
+            '''
 
-            # [N, M, d]
+            :param inputs: [N*M,2d]
+            :param state:如果是LSTMcell，tuple(cell_state->[N*M,2d],hidden_state->[N*m,2d])
+            :param memory:[N*M,JQ,2d]
+            :return:
+            '''
+            rank = len(memory.get_shape())
+            # memory倒数第二个shape
+            _memory_size = tf.shape(memory)[rank-2]
+            # [batch_size,JQ,input_size]
+            tiled_inputs = tf.tile(
+                tf.expand_dims(inputs, 1),
+                [1, _memory_size, 1]
+            )
+            # 如果cell用的是LSTM的话，这里应该是cell,hidden
+            if isinstance(state, tuple):
+                tiled_states = [
+                    # [batch_size,JQ,state_size]
+                    tf.tile(
+                        tf.expand_dims(each, 1),
+                        [1, _memory_size, 1]
+                    )
+                    for each in state
+                ]
+            else:
+                # [N*M,JQ,2d]
+                tiled_states = [
+                    tf.tile(
+                        tf.expand_dims(state, 1),
+                        [1, _memory_size, 1]
+                    )
+                ]
+
+            # input: [N*M,JQ,2d]
+            # cell:  [N*M,JQ,2d]
+            # hidden:[N*M,JQ,2d]
+            # memory:[N*M,JQ,2d]
+            # 输出[N*M,JQ,4d]
             in_ = tf.concat([tiled_inputs] + tiled_states + [memory], axis=2)
+            # [N*M,JQ]，未归一化，得到的应该是对JQ中每个词的Attention
             out = linear(in_, 1, bias, squeeze=True, input_keep_prob=input_keep_prob, is_train=is_train)
             return out
         return linear_controller
@@ -236,7 +266,10 @@ class AttentionCell(RNNCell):
             :param sel_mem: [N, m]
             :return: (new_inputs, new_state) tuple
             """
-            return tf.concat(axis=1, values=[inputs, sel_mem]), state
+            return tf.concat(
+                axis=1,
+                values=[inputs, sel_mem]
+            ), state
         return concat_mapper
 
     @staticmethod
@@ -249,5 +282,15 @@ class AttentionCell(RNNCell):
             :param sel_mem: [N, i]
             :return: (new_inputs, new_state) tuple
             """
-            return tf.concat(axis=1, values=[inputs, sel_mem, inputs * sel_mem, tf.abs(inputs - sel_mem)]), state
+            return \
+                tf.concat(
+                    axis=1,
+                    values=[
+                        inputs,
+                        sel_mem,
+                        inputs * sel_mem,
+                        tf.abs(inputs - sel_mem)
+                    ]
+                ),\
+                state
         return sim_mapper
