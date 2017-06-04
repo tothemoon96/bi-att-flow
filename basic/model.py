@@ -305,6 +305,7 @@ class Model(object):
         with tf.variable_scope("prepro"):
             # qq:[N,JQ,dw+dco]，如果使用char_embedding和word_embedding
             # ([N,JQ,d],[N,JQ,d])
+            # 下面的有Dropout
             (fw_u, bw_u), \
             (
                 (_, fw_u_f),# 前向的最终状态的hidden:[N,d]
@@ -315,6 +316,7 @@ class Model(object):
             # u:[N,JQ,2d]，将前向和后向的隐含层拼接起来
             u = tf.concat(axis=2, values=[fw_u, bw_u])
             # 复用问题的Contextual Embedding的权重对文章编码
+            # 下面的没有Dropout
             if config.share_lstm_weights:
                 # 父variable scope reuse了，子variable scope也会reuse
                 tf.get_variable_scope().reuse_variables()
@@ -392,7 +394,16 @@ class Model(object):
                     is_train=self.is_train
                 )
             else:
-                p0 = attention_layer(config, self.is_train, h, u, h_mask=self.x_mask, u_mask=self.q_mask, scope="p0", tensor_dict=self.tensor_dict)
+                p0 = attention_layer(
+                    config,
+                    self.is_train,
+                    h,
+                    u,
+                    h_mask=self.x_mask,
+                    u_mask=self.q_mask,
+                    scope="p0",
+                    tensor_dict=self.tensor_dict
+                )
                 first_cell_fw = d_cell2_fw
                 second_cell_fw = d_cell3_fw
                 first_cell_bw = d_cell2_bw
@@ -773,7 +784,16 @@ def bi_attention(config, is_train, h, u, h_mask=None, u_mask=None, scope=None, t
         return u_a, h_a
 
 
-def attention_layer(config, is_train, h, u, h_mask=None, u_mask=None, scope=None, tensor_dict=None):
+def attention_layer(
+        config,
+        is_train,
+        h,
+        u,
+        h_mask=None,
+        u_mask=None,
+        scope=None,
+        tensor_dict=None
+):
     with tf.variable_scope(scope or "attention_layer"):
         JX = tf.shape(h)[2]
         M = tf.shape(h)[1]

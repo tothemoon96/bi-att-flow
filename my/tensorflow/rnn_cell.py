@@ -176,60 +176,49 @@ class AttentionCell(RNNCell):
         return self._cell.output_size
 
     def __call__(self, inputs, state, scope=None):
+        '''
+        分别对M句话中的每一句话的每一个词，得到对于整个JQ的attented vector，依据mapper的选择，和文章中某个词的表达进行融合，并送入表达文章中某个词和整个问题的匹配程度的LSTM中进行计算，做法很像MatchLSTM
+        :param inputs: [N*M,2d]
+        :param state: tuple(cell_state->[N*M,2d],hidden_state->[N*M,2d])
+        :param scope:
+        :return:
+        '''
         with tf.variable_scope(scope or "AttentionCell"):
+            # memory_logits:[N*M,JQ]
+            # 得到对问题的每一个词的未归一化Attention
             memory_logits = self._controller(inputs, state, self._flat_memory)
-            sel_mem = softsel(self._flat_memory, memory_logits, mask=self._flat_mask)  # [N, m]
+            # sel_mem:[N*M,2d]
+            # 得到文章中某个词对整个问题的Attented Vector
+            sel_mem = softsel(self._flat_memory, memory_logits, mask=self._flat_mask)
+            # new_inputs:[N*M,nd],n和选用的_mapper函数有关
+            # new_state:和state相同
             new_inputs, new_state = self._mapper(inputs, state, sel_mem)
+            # 把它作为LSTM下一次的输入送进去
             return self._cell(new_inputs, state)
 
     @staticmethod
     def get_double_linear_controller(size, bias, input_keep_prob=1.0, is_train=None):
         def double_linear_controller(inputs, state, memory):
             """
-
-            :param inputs: [N, i]
-            :param state: [N, d]
-            :param memory: [N, M, m]
-            :return: [N, M]
+            linear(tanh(linear))，使用这种方式计算的Attention是Bahdanau Attention
+            得到的是对JQ中每个词的未归一化的Attention
+            :param inputs: [N*M,2d]
+            :param state: 如果是LSTMcell，tuple(cell_state->[N*M,2d],hidden_state->[N*M,2d])
+            :param memory: [N*M,JQ,2d]
+            :return: [N*M,JQ]
             """
             rank = len(memory.get_shape())
             _memory_size = tf.shape(memory)[rank-2]
-            tiled_inputs = tf.tile(tf.expand_dims(inputs, 1), [1, _memory_size, 1])
-            if isinstance(state, tuple):
-                tiled_states = [tf.tile(tf.expand_dims(each, 1), [1, _memory_size, 1])
-                                for each in state]
-            else:
-                tiled_states = [tf.tile(tf.expand_dims(state, 1), [1, _memory_size, 1])]
-
-            # [N, M, d]
-            in_ = tf.concat([tiled_inputs] + tiled_states + [memory], axis=2)
-            out = double_linear_logits(in_, size, bias, input_keep_prob=input_keep_prob,
-                                       is_train=is_train)
-            return out
-        return double_linear_controller
-
-    @staticmethod
-    def get_linear_controller(bias, input_keep_prob=1.0, is_train=None):
-        def linear_controller(inputs, state, memory):
-            '''
-
-            :param inputs: [N*M,2d]
-            :param state:如果是LSTMcell，tuple(cell_state->[N*M,2d],hidden_state->[N*m,2d])
-            :param memory:[N*M,JQ,2d]
-            :return:
-            '''
-            rank = len(memory.get_shape())
-            # memory倒数第二个shape
-            _memory_size = tf.shape(memory)[rank-2]
-            # [batch_size,JQ,input_size]
+            # [N*M,JQ,2d]
             tiled_inputs = tf.tile(
                 tf.expand_dims(inputs, 1),
                 [1, _memory_size, 1]
             )
             # 如果cell用的是LSTM的话，这里应该是cell,hidden
+            # 重复了JQ遍
             if isinstance(state, tuple):
                 tiled_states = [
-                    # [batch_size,JQ,state_size]
+                    # [N*M,JQ,2d]
                     tf.tile(
                         tf.expand_dims(each, 1),
                         [1, _memory_size, 1]
@@ -249,9 +238,65 @@ class AttentionCell(RNNCell):
             # cell:  [N*M,JQ,2d]
             # hidden:[N*M,JQ,2d]
             # memory:[N*M,JQ,2d]
-            # 输出[N*M,JQ,4d]
+            # 输出[N*M,JQ,8d]
             in_ = tf.concat([tiled_inputs] + tiled_states + [memory], axis=2)
-            # [N*M,JQ]，未归一化，得到的应该是对JQ中每个词的Attention
+            out = double_linear_logits(
+                in_,
+                size,
+                bias,
+                input_keep_prob=input_keep_prob,
+                is_train=is_train
+            )
+            return out
+        return double_linear_controller
+
+    @staticmethod
+    def get_linear_controller(bias, input_keep_prob=1.0, is_train=None):
+        def linear_controller(inputs, state, memory):
+            '''
+            linear，未归一化的Attention
+            得到的是对JQ中每个词的未归一化的Attention，它和标准Attention的计算不一样，没有激活函数，全部都是线性层
+            :param inputs: [N*M,2d]
+            :param state:如果是LSTMcell，tuple(cell_state->[N*M,2d],hidden_state->[N*M,2d])
+            :param memory:[N*M,JQ,2d]
+            :return: [N*M,JQ]
+            '''
+            rank = len(memory.get_shape())
+            # memory倒数第二个shape
+            _memory_size = tf.shape(memory)[rank-2]
+            # [N*M,JQ,2d]
+            tiled_inputs = tf.tile(
+                tf.expand_dims(inputs, 1),
+                [1, _memory_size, 1]
+            )
+            # 如果cell用的是LSTM的话，这里应该是cell,hidden
+            # 重复了JQ遍
+            if isinstance(state, tuple):
+                tiled_states = [
+                    # [N*M,JQ,2d]
+                    tf.tile(
+                        tf.expand_dims(each, 1),
+                        [1, _memory_size, 1]
+                    )
+                    for each in state
+                ]
+            else:
+                # [N*M,JQ,2d]
+                tiled_states = [
+                    tf.tile(
+                        tf.expand_dims(state, 1),
+                        [1, _memory_size, 1]
+                    )
+                ]
+
+            # input: [N*M,JQ,2d]
+            # cell:  [N*M,JQ,2d]
+            # hidden:[N*M,JQ,2d]
+            # memory:[N*M,JQ,2d]
+            # 输出[N*M,JQ,8d]
+            in_ = tf.concat([tiled_inputs] + tiled_states + [memory], axis=2)
+            # [N*M,JQ]，未归一化
+            # 得到的是对JQ中每个词的未归一化的Attention，它和标准Attention的计算不一样，没有激活函数，全部都是线性层
             out = linear(in_, 1, bias, squeeze=True, input_keep_prob=input_keep_prob, is_train=is_train)
             return out
         return linear_controller
@@ -260,7 +305,7 @@ class AttentionCell(RNNCell):
     def get_concat_mapper():
         def concat_mapper(inputs, state, sel_mem):
             """
-
+            直接进行拼接
             :param inputs: [N, i]
             :param state: [N, d]
             :param sel_mem: [N, m]
@@ -276,10 +321,10 @@ class AttentionCell(RNNCell):
     def get_sim_mapper():
         def sim_mapper(inputs, state, sel_mem):
             """
-            Assume that inputs and sel_mem are the same size
-            :param inputs: [N, i]
-            :param state: [N, d]
-            :param sel_mem: [N, i]
+            Assume that inputs and sel_mem are the same size，除了拼接之外，还做了一些人工提取特征的操作
+            :param inputs: 文章中某个词,[N*M,2d]
+            :param state: 使用LSTM(cell:[N*M, 2d],hidden:[N*M,2d])
+            :param sel_mem: 问题的Attented Vector，[N*M,2d]
             :return: (new_inputs, new_state) tuple
             """
             return \

@@ -99,7 +99,7 @@ def softmax(logits, mask=None, scope=None):
 
 def softsel(target, logits, mask=None, scope=None):
     """
-
+    J应该是指要分配attention对象的数量，d是指hidden neural的维度，功能是根据target和logits(attention)形成一个attented vector
     :param target: [ ..., J, d] dtype=float
     :param logits: [ ..., J], dtype=float
     :param mask: [ ..., J], dtype=bool
@@ -107,21 +107,69 @@ def softsel(target, logits, mask=None, scope=None):
     :return: [..., d], dtype=float
     """
     with tf.name_scope(scope or "Softsel"):
+        # a:[ ..., J]
+        # 应该是对J中每一个记忆单元分配的attention
         a = softmax(logits, mask=mask)
         target_rank = len(target.get_shape().as_list())
+        # out:[...,d]，应该是根据J形成的attented vector
         out = tf.reduce_sum(
+            # 元素级相乘
+            # tf.expand_dims(a, -1):[ ..., J,1]，沿着最后一个轴广播，某一个值乘以所有的d个值
+            # 得到:[...,J,d]
             tf.expand_dims(a, -1) * target,
             target_rank - 2
         )
         return out
 
 
-def double_linear_logits(args, size, bias, bias_start=0.0, scope=None, mask=None, wd=0.0, input_keep_prob=1.0, is_train=None):
+def double_linear_logits(
+        args,
+        size,
+        bias,
+        bias_start=0.0,
+        scope=None,
+        mask=None,
+        wd=0.0,
+        input_keep_prob=1.0,
+        is_train=None
+):
+    '''
+    linear(tanh(linear))，和linear_logits区别在于经历了两次线性变换和一次tanh非线性变换
+    :param args:
+    :param size:
+    :param bias:
+    :param bias_start:
+    :param scope:
+    :param mask:
+    :param wd:
+    :param input_keep_prob:
+    :param is_train:
+    :return:
+    '''
     with tf.variable_scope(scope or "Double_Linear_Logits"):
-        first = tf.tanh(linear(args, size, bias, bias_start=bias_start, scope='first',
-                               wd=wd, input_keep_prob=input_keep_prob, is_train=is_train))
-        second = linear(first, 1, bias, bias_start=bias_start, squeeze=True, scope='second',
-                        wd=wd, input_keep_prob=input_keep_prob, is_train=is_train)
+        first = tf.tanh(
+            linear(
+                args,
+                size,
+                bias,
+                bias_start=bias_start,
+                scope='first',
+                wd=wd,
+                input_keep_prob=input_keep_prob,
+                is_train=is_train
+            )
+        )
+        second = linear(
+            first,
+            1,
+            bias,
+            bias_start=bias_start,
+            squeeze=True,
+            scope='second',
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
         if mask is not None:
             second = exp_mask(second, mask)
         return second
