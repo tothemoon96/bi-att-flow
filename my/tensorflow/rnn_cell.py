@@ -7,7 +7,7 @@ from my.tensorflow.nn import linear, softsel, double_linear_logits
 
 class SwitchableDropoutWrapper(DropoutWrapper):
     '''
-    通过is_train来打开或者关闭Dropout
+    通过is_train来打开或者关闭Dropout，Dropout施加在输入层和输出层
     '''
     def __init__(self, cell, is_train, input_keep_prob=1.0, output_keep_prob=1.0,
              seed=None):
@@ -139,6 +139,9 @@ class MatchCell(RNNCell):
 
 
 class AttentionCell(RNNCell):
+    '''
+    Attention中MLP的权重不带L2正则化系数
+    '''
     def __init__(self, cell, memory, mask=None, controller=None, mapper=None, input_keep_prob=1.0, is_train=None):
         """
         Early fusion attention cell: uses the (inputs, state) to control the current attention.

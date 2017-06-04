@@ -397,10 +397,10 @@ class Model(object):
                 p0 = attention_layer(
                     config,
                     self.is_train,
-                    h,
-                    u,
-                    h_mask=self.x_mask,
-                    u_mask=self.q_mask,
+                    h,# [N,M,JX,2d]
+                    u,# [N,JQ,2d]
+                    h_mask=self.x_mask,# [N,M,JX]
+                    u_mask=self.q_mask,# [N,JQ]
                     scope="p0",
                     tensor_dict=self.tensor_dict
                 )
@@ -752,22 +752,75 @@ class Model(object):
         return feed_dict
 
 
-def bi_attention(config, is_train, h, u, h_mask=None, u_mask=None, scope=None, tensor_dict=None):
+def bi_attention(
+        config,
+        is_train,
+        h,
+        u,
+        h_mask=None,
+        u_mask=None,
+        scope=None,
+        tensor_dict=None
+):
+    '''
+    这里的attention计算没有Dropout
+    :param config:
+    :param is_train:
+    :param h:文章中每个词的编码，[N,M,JX,2d]
+    :param u:问题中每个词的编码，[N,JQ,2d]
+    :param h_mask:[N,M,JX]
+    :param u_mask:[N,JQ]
+    :param scope:
+    :param tensor_dict:
+    :return:
+    '''
     with tf.variable_scope(scope or "bi_attention"):
         JX = tf.shape(h)[2]
         M = tf.shape(h)[1]
         JQ = tf.shape(u)[1]
-        h_aug = tf.tile(tf.expand_dims(h, 3), [1, 1, 1, JQ, 1])
-        u_aug = tf.tile(tf.expand_dims(tf.expand_dims(u, 1), 1), [1, M, JX, 1, 1])
+        # h_aug:[N,M,JX,JQ,2d]复制了JQ份
+        h_aug = tf.tile(
+            tf.expand_dims(h, 3),
+            [1, 1, 1, JQ, 1]
+        )
+        # u_aug:[N,M,JX,JQ,2d]复制了M*JX份
+        u_aug = tf.tile(
+            tf.expand_dims(
+                tf.expand_dims(u, 1),
+                1
+            ),
+            [1, M, JX, 1, 1]
+        )
         if h_mask is None:
             hu_mask = None
         else:
-            h_mask_aug = tf.tile(tf.expand_dims(h_mask, 3), [1, 1, 1, JQ])
-            u_mask_aug = tf.tile(tf.expand_dims(tf.expand_dims(u_mask, 1), 1), [1, M, JX, 1])
+            # h_mask_aug:[N,M,JX,JQ]复制了JQ份
+            h_mask_aug = tf.tile(
+                tf.expand_dims(h_mask, 3),
+                [1, 1, 1, JQ]
+            )
+            # u_mask_aug:[N,M,JX,JQ]复制了M*JX份
+            u_mask_aug = tf.tile(
+                tf.expand_dims(
+                    tf.expand_dims(u_mask, 1),
+                    1
+                ),
+                [1, M, JX, 1]
+            )
+            # hu_mask:[N,M,JX,JQ]，表明文章中每一句某个词对应的某个问题的某个词是否存在答案
             hu_mask = h_mask_aug & u_mask_aug
 
-        u_logits = get_logits([h_aug, u_aug], None, True, wd=config.wd, mask=hu_mask,
-                              is_train=is_train, func=config.logit_func, scope='u_logits')  # [N, M, JX, JQ]
+        #  没有Dropout
+        u_logits = get_logits(
+            [h_aug, u_aug],
+            None,
+            True,
+            wd=config.wd,
+            mask=hu_mask,
+            is_train=is_train,
+            func=config.logit_func,
+            scope='u_logits'
+        )
         u_a = softsel(u_aug, u_logits)  # [N, M, JX, d]
         h_a = softsel(h, tf.reduce_max(u_logits, 3))  # [N, M, d]
         h_a = tf.tile(tf.expand_dims(h_a, 2), [1, 1, JX, 1])
@@ -794,12 +847,32 @@ def attention_layer(
         scope=None,
         tensor_dict=None
 ):
+    '''
+
+    :param config:
+    :param is_train:
+    :param h: 文章中每个词的编码，[N,M,JX,2d]
+    :param u: 问题中每个词的编码，[N,JQ,2d]
+    :param h_mask: [N,M,JX]
+    :param u_mask: [N,JQ]
+    :param scope:
+    :param tensor_dict:
+    :return:
+    '''
     with tf.variable_scope(scope or "attention_layer"):
         JX = tf.shape(h)[2]
         M = tf.shape(h)[1]
         JQ = tf.shape(u)[1]
         if config.q2c_att or config.c2q_att:
-            u_a, h_a = bi_attention(config, is_train, h, u, h_mask=h_mask, u_mask=u_mask, tensor_dict=tensor_dict)
+            u_a, h_a = bi_attention(
+                config,
+                is_train,
+                h,
+                u,
+                h_mask=h_mask,
+                u_mask=u_mask,
+                tensor_dict=tensor_dict
+            )
         if not config.c2q_att:
             u_a = tf.tile(tf.expand_dims(tf.expand_dims(tf.reduce_mean(u, 1), 1), 1), [1, M, JX, 1])
         if config.q2c_att:

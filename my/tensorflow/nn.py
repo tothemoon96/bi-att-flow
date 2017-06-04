@@ -8,8 +8,8 @@ from my.tensorflow import flatten, reconstruct, add_wd, exp_mask
 def linear(args, output_size, bias, bias_start=0.0, scope=None, squeeze=False, wd=0.0, input_keep_prob=1.0,
            is_train=None):
     '''
-    经过一个线性层，没有激活函数
-    :param args:输入的tensor或者tensor的list
+    经过一个线性层，没有激活函数，Dropout添加在输入层
+    :param args:输入的tensor或者tensor的list，如果是个list，那个list中的tensor的shape要相同，会将这些tensor的最后一个维度拼起来作为输入进行仿射变换
     :param output_size:输出的单元大小
     :param bias:是否有bias
     :param bias_start:bias的初始值
@@ -136,7 +136,7 @@ def double_linear_logits(
     '''
     linear(tanh(linear))，和linear_logits区别在于经历了两次线性变换和一次tanh非线性变换
     :param args:
-    :param size:
+    :param size:tanh层神经元的数目
     :param bias:
     :param bias_start:
     :param scope:
@@ -176,58 +176,151 @@ def double_linear_logits(
 
 
 def linear_logits(args, bias, bias_start=0.0, scope=None, mask=None, wd=0.0, input_keep_prob=1.0, is_train=None):
+    '''
+    :param args: tensor或tensor的list,[...,J,d]或[[...,J,d]]*n
+    :param bias:
+    :param bias_start:
+    :param scope:
+    :param mask:
+    :param wd:
+    :param input_keep_prob:
+    :param is_train:
+    :return:[...,J]
+    '''
     with tf.variable_scope(scope or "Linear_Logits"):
-        logits = linear(args, 1, bias, bias_start=bias_start, squeeze=True, scope='first',
-                        wd=wd, input_keep_prob=input_keep_prob, is_train=is_train)
+        logits = linear(
+            args,
+            1,
+            bias,
+            bias_start=bias_start,
+            squeeze=True,
+            scope='first',
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
         if mask is not None:
             logits = exp_mask(logits, mask)
         return logits
 
 
 def sum_logits(args, mask=None, name=None):
+    '''
+    args列表中将各个tensor最后一个轴上的值累加，然后将处理后的tensor累加
+    :param args: [h:[N,M,JX,JQ,2d]复制了JQ份,u:[N,M,JX,JQ,2d]复制了M*JX份]
+    :param mask: [N,M,JX,JQ]，表明文章中每一句某个词对应的某个问题的某个词是否存在答案
+    :param name: scope
+    :return:[N,M,JX,JQ]
+    '''
     with tf.name_scope(name or "sum_logits"):
         if args is None or (nest.is_sequence(args) and not args):
             raise ValueError("`args` must be specified")
         if not nest.is_sequence(args):
             args = [args]
         rank = len(args[0].get_shape())
-        logits = sum(tf.reduce_sum(arg, rank-1) for arg in args)
+        logits = sum(
+            # [N,M,JX,JQ]
+            tf.reduce_sum(arg, rank-1)
+            for arg in args
+        )
         if mask is not None:
             logits = exp_mask(logits, mask)
         return logits
 
 
 def get_logits(args, size, bias, bias_start=0.0, scope=None, mask=None, wd=0.0, input_keep_prob=1.0, is_train=None, func=None):
+    '''
+    使用各种S_{tj}函数计算Attention Flow Layer中的未归一化Attention
+    :param args:[h:[N,M,JX,JQ,2d]复制了JQ份,u:[N,M,JX,JQ,2d]复制了M*JX份]
+    :param size:
+    :param bias:是否有偏置
+    :param bias_start:偏置的初始值
+    :param scope:
+    :param mask:
+    :param wd:l2正则化系数
+    :param input_keep_prob:
+    :param is_train:是否是训练状态，和Dropout有关
+    :param func:
+    :return:[N,M,JX,JQ]
+    '''
     if func is None:
         func = "sum"
+    # \alpha(h,u) = e^T [h;u]
     if func == 'sum':
         return sum_logits(args, mask=mask, name=scope)
+    # \alpha(h,u) = w^T_{(s)} [h;u] + b_{(s)}
     elif func == 'linear':
-        return linear_logits(args, bias, bias_start=bias_start, scope=scope, mask=mask, wd=wd, input_keep_prob=input_keep_prob,
-                             is_train=is_train)
+        return linear_logits(
+            args,
+            bias,
+            bias_start=bias_start,
+            scope=scope,
+            mask=mask,
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
+    # \alpha(h,u) = w^T_{(s)} tanh(W^T_{(s)} [h;u] + b_{(s1)}) + b_{(s2))}
     elif func == 'double':
-        return double_linear_logits(args, size, bias, bias_start=bias_start, scope=scope, mask=mask, wd=wd, input_keep_prob=input_keep_prob,
-                                    is_train=is_train)
+        return double_linear_logits(
+            args,
+            size,
+            bias,
+            bias_start=bias_start,
+            scope=scope,
+            mask=mask,
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
+    # \alpha(h,u) = e^T (h \odot u)
     elif func == 'dot':
         assert len(args) == 2
         arg = args[0] * args[1]
         return sum_logits([arg], mask=mask, name=scope)
+    # \alpha(h,u) = w^T_{(s)} (h \odot u) + b_{(s)}
     elif func == 'mul_linear':
         assert len(args) == 2
         arg = args[0] * args[1]
-        return linear_logits([arg], bias, bias_start=bias_start, scope=scope, mask=mask, wd=wd, input_keep_prob=input_keep_prob,
-                             is_train=is_train)
+        return linear_logits(
+            [arg],
+            bias,
+            bias_start=bias_start,
+            scope=scope,
+            mask=mask,
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
+    # \alpha(h,u) = e^T (W_p h \odot u)
     elif func == 'proj':
         assert len(args) == 2
         d = args[1].get_shape()[-1]
-        proj = linear([args[0]], d, False, bias_start=bias_start, scope=scope, wd=wd, input_keep_prob=input_keep_prob,
-                      is_train=is_train)
+        proj = linear(
+            [args[0]],
+            d,
+            False,
+            bias_start=bias_start,
+            scope=scope,
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
         return sum_logits([proj * args[1]], mask=mask)
+    # \alpha(h,u) = w^T_{(s)} [h;u;h \odot u] + b_{(s)}
     elif func == 'tri_linear':
         assert len(args) == 2
         new_arg = args[0] * args[1]
-        return linear_logits([args[0], args[1], new_arg], bias, bias_start=bias_start, scope=scope, mask=mask, wd=wd, input_keep_prob=input_keep_prob,
-                             is_train=is_train)
+        return linear_logits(
+            [args[0], args[1], new_arg],
+            bias,
+            bias_start=bias_start,
+            scope=scope,
+            mask=mask,
+            wd=wd,
+            input_keep_prob=input_keep_prob,
+            is_train=is_train
+        )
     else:
         raise Exception()
 
