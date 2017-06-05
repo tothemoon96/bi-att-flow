@@ -96,6 +96,7 @@ flags.DEFINE_string("data_filter", "max", "max | valid | semi [max]")
 flags.DEFINE_bool("use_glove_for_unk", True, "use glove for unk [False]")
 # glove中存在的词不用被训练到
 flags.DEFINE_bool("known_if_glove", True, "consider as known if present in glove [False]")
+# \alpha(h,u)使用的函数
 flags.DEFINE_string("logit_func", "tri_linear", "logit func [tri_linear]")
 flags.DEFINE_string("answer_func", "linear", "answer logit func [linear]")
 flags.DEFINE_string("sh_logit_func", "tri_linear", "sh logit func [tri_linear]")

@@ -6,16 +6,16 @@
     <bookmark url="file://$PROJECT_DIR$/basic/model.py" line="93" mnemonic="6" />
     <bookmark url="file://$PROJECT_DIR$/basic/main.py" line="84" />
     <bookmark url="file://$PROJECT_DIR$/basic/read_data.py" line="343" />
-    <bookmark url="file://$PROJECT_DIR$/basic/model.py" line="681" />
+    <bookmark url="file://$PROJECT_DIR$/basic/model.py" line="763" />
     <bookmark url="file://$PROJECT_DIR$/basic/model.py" line="222" />
     <bookmark url="file://$PROJECT_DIR$/my/tensorflow/rnn_cell.py" line="11" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca50f347-8917-446a-9aca-e8b1c35f73ba" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/cli.py" afterPath="$PROJECT_DIR$/basic/cli.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/model.py" afterPath="$PROJECT_DIR$/basic/model.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my/tensorflow/nn.py" afterPath="$PROJECT_DIR$/my/tensorflow/nn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my/tensorflow/rnn_cell.py" afterPath="$PROJECT_DIR$/my/tensorflow/rnn_cell.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my/tensorflow/rnn.py" afterPath="$PROJECT_DIR$/my/tensorflow/rnn.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -26,7 +26,7 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/bi_att_flow$prepro.coverage" NAME="prepro Coverage Results" MODIFIED="1496107146870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/bi_att_flow$train.coverage" NAME="train Coverage Results" MODIFIED="1496558677763" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/bi_att_flow$train.coverage" NAME="train Coverage Results" MODIFIED="1496630514438" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
     <option name="SHOW_INTERMEDIATE" value="true" />
@@ -41,14 +41,14 @@
     <window id="4">
       <content type="file-editors">
         <state>
-          <splitter split-orientation="horizontal" split-proportion="0.44427082">
+          <splitter split-orientation="horizontal" split-proportion="0.51145834">
             <split-first>
               <leaf>
-                <file leaf-file-name="nn.py" pinned="false" current-in-tab="true">
+                <file leaf-file-name="nn.py" pinned="false" current-in-tab="false">
                   <entry file="file://$PROJECT_DIR$/my/tensorflow/nn.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="543">
-                        <caret line="239" column="21" lean-forward="true" selection-start-line="239" selection-start-column="21" selection-end-line="239" selection-end-column="21" />
+                      <state relative-caret-position="433">
+                        <caret line="235" column="21" lean-forward="true" selection-start-line="235" selection-start-column="21" selection-end-line="235" selection-end-column="21" />
                         <folding>
                           <element signature="e#0#72#0" expanded="true" />
                         </folding>
@@ -56,11 +56,11 @@
                     </provider>
                   </entry>
                 </file>
-                <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
+                <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
                   <entry file="file://$PROJECT_DIR$/basic/model.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="559">
-                        <caret line="809" column="33" lean-forward="false" selection-start-line="809" selection-start-column="14" selection-end-line="809" selection-end-column="33" />
+                      <state relative-caret-position="585">
+                        <caret line="533" column="49" lean-forward="true" selection-start-line="533" selection-start-column="49" selection-end-line="533" selection-end-column="49" />
                         <folding>
                           <element signature="e#0#13#0" expanded="true" />
                         </folding>
@@ -78,23 +78,11 @@
                     </provider>
                   </entry>
                 </file>
-                <file leaf-file-name="core_rnn_cell_impl.py" pinned="false" current-in-tab="false">
-                  <entry file="file://$USER_HOME$/.PyCharm2017.1/system/remote_sources/1860324320/-1417380504/tensorflow/contrib/rnn/python/ops/core_rnn_cell_impl.py">
-                    <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="307">
-                        <caret line="1004" column="4" lean-forward="false" selection-start-line="1004" selection-start-column="4" selection-end-line="1004" selection-end-column="4" />
-                        <folding>
-                          <element signature="e#728#766#0" expanded="true" />
-                        </folding>
-                      </state>
-                    </provider>
-                  </entry>
-                </file>
                 <file leaf-file-name="rnn.py" pinned="false" current-in-tab="false">
                   <entry file="file://$PROJECT_DIR$/my/tensorflow/rnn.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="1092">
-                        <caret line="44" column="4" lean-forward="false" selection-start-line="44" selection-start-column="4" selection-end-line="44" selection-end-column="4" />
+                      <state relative-caret-position="837">
+                        <caret line="102" column="4" lean-forward="true" selection-start-line="102" selection-start-column="4" selection-end-line="102" selection-end-column="4" />
                         <folding>
                           <element signature="e#0#23#0" expanded="true" />
                         </folding>
@@ -109,8 +97,8 @@
                 <file leaf-file-name="nn.py" pinned="false" current-in-tab="false">
                   <entry file="file://$PROJECT_DIR$/my/tensorflow/nn.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="307">
-                        <caret line="99" column="4" lean-forward="false" selection-start-line="99" selection-start-column="4" selection-end-line="99" selection-end-column="4" />
+                      <state relative-caret-position="580">
+                        <caret line="111" column="17" lean-forward="false" selection-start-line="111" selection-start-column="17" selection-end-line="111" selection-end-column="17" />
                         <folding>
                           <element signature="e#0#72#0" expanded="true" />
                         </folding>
@@ -121,7 +109,7 @@
                 <file leaf-file-name="general.py" pinned="false" current-in-tab="false">
                   <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="297">
+                      <state relative-caret-position="327">
                         <caret line="104" column="4" lean-forward="false" selection-start-line="104" selection-start-column="4" selection-end-line="104" selection-end-column="4" />
                         <folding>
                           <element signature="e#0#33#0" expanded="true" />
@@ -133,8 +121,8 @@
                 <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
                   <entry file="file://$PROJECT_DIR$/basic/model.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="396">
-                        <caret line="823" column="34" lean-forward="false" selection-start-line="823" selection-start-column="34" selection-end-line="823" selection-end-column="34" />
+                      <state relative-caret-position="522">
+                        <caret line="906" column="54" lean-forward="false" selection-start-line="906" selection-start-column="54" selection-end-line="906" selection-end-column="54" />
                         <folding>
                           <element signature="e#0#13#0" expanded="true" />
                         </folding>
@@ -145,8 +133,8 @@
                 <file leaf-file-name="rnn_cell.py" pinned="false" current-in-tab="false">
                   <entry file="file://$PROJECT_DIR$/my/tensorflow/rnn_cell.py">
                     <provider selected="true" editor-type-id="text-editor">
-                      <state relative-caret-position="-1625">
-                        <caret line="142" column="29" lean-forward="false" selection-start-line="142" selection-start-column="29" selection-end-line="142" selection-end-column="29" />
+                      <state relative-caret-position="588">
+                        <caret line="195" column="50" lean-forward="true" selection-start-line="195" selection-start-column="50" selection-end-line="195" selection-end-column="50" />
                         <folding />
                       </state>
                     </provider>
@@ -178,8 +166,8 @@
             <file leaf-file-name="cli.py" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/basic/cli.py">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="340">
-                    <caret line="105" column="60" lean-forward="false" selection-start-line="105" selection-start-column="60" selection-end-line="105" selection-end-column="60" />
+                  <state relative-caret-position="223">
+                    <caret line="100" column="42" lean-forward="false" selection-start-line="100" selection-start-column="36" selection-end-line="100" selection-end-column="42" />
                     <folding />
                   </state>
                 </provider>
@@ -244,13 +232,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>reuse_variables</find>
-      <find>share_cnn_weights</find>
-      <find>char_out_size</find>
-      <find>initializ</find>
-      <find>initializer</find>
-      <find>initial</find>
-      <find>variable</find>
       <find>use_word_emb</find>
       <find>new_emb_</find>
       <find>self.new_emb_mat</find>
@@ -273,8 +254,18 @@
       <find>share_lstm_weights</find>
       <find>offset</find>
       <find>input_keep_prob</find>
+      <find>logit_func</find>
+      <find>get_collection</find>
+      <find>reduce_mean</find>
       <find>reduce_sum</find>
+      <find>tensor_dict</find>
+      <find>answer_func</find>
+      <find>softsel</find>
+      <find>文章</find>
     </findStrings>
+    <dirStrings>
+      <dir>C:\Users\hanwe\Desktop\Project\Python\bi-att-flow\basic</dir>
+    </dirStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -302,11 +293,11 @@
         <option value="$PROJECT_DIR$/basic/read_data.py" />
         <option value="$PROJECT_DIR$/basic/main.py" />
         <option value="$PROJECT_DIR$/my/tensorflow/general.py" />
+        <option value="$PROJECT_DIR$/my/tensorflow/rnn_cell.py" />
+        <option value="$PROJECT_DIR$/my/tensorflow/nn.py" />
         <option value="$PROJECT_DIR$/my/tensorflow/rnn.py" />
         <option value="$PROJECT_DIR$/basic/cli.py" />
-        <option value="$PROJECT_DIR$/my/tensorflow/rnn_cell.py" />
         <option value="$PROJECT_DIR$/basic/model.py" />
-        <option value="$PROJECT_DIR$/my/tensorflow/nn.py" />
       </list>
     </option>
   </component>
@@ -460,7 +451,7 @@
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="WebServerToolWindowFactoryState" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/basic" />
     <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
@@ -725,10 +716,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1374" y="-8" width="1382" height="754" extended-state="6" />
+    <frame x="-1374" y="-8" width="1382" height="754" extended-state="7" />
     <editor active="true" />
     <layout>
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36290324" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36290324" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3289183" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="92" y="92" width="1736" height="866" />
       <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16630901" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -741,7 +732,7 @@
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32419354" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="WINDOWED" visible="true" show_stripe_button="true" weight="0.2950644" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="-1366" y="23" width="1366" height="715" />
+      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="WINDOWED" visible="true" show_stripe_button="true" weight="0.2950644" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="-1366" y="23" width="1366" height="715" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21588486" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -797,7 +788,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="51" />
+      <option name="time" value="52" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -1137,24 +1128,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/my/tensorflow/rnn.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1092">
-          <caret line="44" column="4" lean-forward="false" selection-start-line="44" selection-start-column="4" selection-end-line="44" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/cli.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="105" column="60" lean-forward="false" selection-start-line="105" selection-start-column="60" selection-end-line="105" selection-end-column="60" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharm2017.1/system/remote_sources/1860324320/-1417380504/tensorflow/contrib/rnn/python/ops/core_rnn_cell_impl.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="307">
@@ -1162,6 +1135,52 @@
           <folding>
             <element signature="e#728#766#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/my/tensorflow/rnn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="837">
+          <caret line="102" column="4" lean-forward="true" selection-start-line="102" selection-start-column="4" selection-end-line="102" selection-end-column="4" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/my/tensorflow/rnn_cell.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="63">
+          <caret line="7" column="6" lean-forward="false" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="327">
+          <caret line="104" column="4" lean-forward="false" selection-start-line="104" selection-start-column="4" selection-end-line="104" selection-end-column="4" />
+          <folding>
+            <element signature="e#0#33#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/my/tensorflow/nn.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="433">
+          <caret line="235" column="21" lean-forward="true" selection-start-line="235" selection-start-column="21" selection-end-line="235" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#72#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/basic/cli.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="223">
+          <caret line="100" column="42" lean-forward="false" selection-start-line="100" selection-start-column="36" selection-end-line="100" selection-end-column="42" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1175,40 +1194,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="297">
-          <caret line="104" column="4" lean-forward="false" selection-start-line="104" selection-start-column="4" selection-end-line="104" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#33#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/my/tensorflow/rnn_cell.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="63">
-          <caret line="7" column="6" lean-forward="false" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/basic/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="559">
-          <caret line="809" column="33" lean-forward="false" selection-start-line="809" selection-start-column="14" selection-end-line="809" selection-end-column="33" />
+        <state relative-caret-position="585">
+          <caret line="533" column="49" lean-forward="true" selection-start-line="533" selection-start-column="49" selection-end-line="533" selection-end-column="49" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/my/tensorflow/nn.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="543">
-          <caret line="239" column="21" lean-forward="true" selection-start-line="239" selection-start-column="21" selection-end-line="239" selection-end-column="21" />
-          <folding>
-            <element signature="e#0#72#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -129,7 +129,7 @@ class Model(object):
         dc, dw, dco = config.char_emb_size, config.word_emb_size, config.char_out_size
 
         with tf.variable_scope("emb"):
-            # Character Embedding Layer
+            # 1.Character Embedding Layer
             if config.use_char_emb:
                 # 在cpu上创建变量
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
@@ -182,7 +182,7 @@ class Model(object):
                         # [N,JQ,filter_size*多少种卷积核（dco）]
                         qq = tf.reshape(qq, [-1, JQ, dco])
 
-            # Word Embedding Layer
+            # 2.Word Embedding Layer
             if config.use_word_emb:
                 with tf.variable_scope("emb_var"), tf.device("/cpu:0"):
                     if config.mode == 'train':
@@ -301,7 +301,7 @@ class Model(object):
         # [N]，某一个问题有多长
         q_len = tf.reduce_sum(tf.cast(self.q_mask, 'int32'), 1)
 
-        # Contextual Embedding Layer
+        # 3.Contextual Embedding Layer
         with tf.variable_scope("prepro"):
             # qq:[N,JQ,dw+dco]，如果使用char_embedding和word_embedding
             # ([N,JQ,d],[N,JQ,d])
@@ -339,8 +339,9 @@ class Model(object):
             # 文章中每个词的编码，[N,M,JX,2d]
             self.tensor_dict['h'] = h
 
-        # Attention Flow Layer
+        # 4.Attention Flow Layer
         with tf.variable_scope("main"):
+            # 这部分出现在论文中的Ablations中
             if config.dynamic_att:
                 p0 = h
                 # u:[N*M,JQ,2d]，每个样本点中问题的编码重复了M遍
@@ -394,6 +395,7 @@ class Model(object):
                     is_train=self.is_train
                 )
             else:
+                # 论文中的\beta(h,\tilde{u},\tilde{h})，[N,M,JX,8d]
                 p0 = attention_layer(
                     config,
                     self.is_train,
@@ -409,27 +411,106 @@ class Model(object):
                 first_cell_bw = d_cell2_bw
                 second_cell_bw = d_cell3_bw
 
-            # [N, M, JX, 2d]
-            (fw_g0, bw_g0), _ = bidirectional_dynamic_rnn(first_cell_fw, first_cell_bw, p0, x_len, dtype='float', scope='g0')
+            # 5.Modeling Layer
+            # Match-LSTM，每一层的输入和输出带Dropout
+            # ([N, M, JX, d],[N, M, JX, d])
+            (fw_g0, bw_g0), _ = bidirectional_dynamic_rnn(
+                first_cell_fw,
+                first_cell_bw,
+                p0, # [N,M,JX,nd]
+                x_len, # [N,M]，某一个句子有多长
+                dtype='float',
+                scope='g0'
+            )
+            # g0:[N, M, JX, 2d]
             g0 = tf.concat(axis=3, values=[fw_g0, bw_g0])
-            # [N, M, JX, 2d]
-            (fw_g1, bw_g1), _ = bidirectional_dynamic_rnn(second_cell_fw, second_cell_bw, g0, x_len, dtype='float', scope='g1')
+            (fw_g1, bw_g1), _ = bidirectional_dynamic_rnn(
+                second_cell_fw,
+                second_cell_bw,
+                g0,
+                x_len,
+                dtype='float',
+                scope='g1'
+            )
+            # g1:[N, M, JX, 2d]
+            # 论文中的M
             g1 = tf.concat(axis=3, values=[fw_g1, bw_g1])
 
-            logits = get_logits([g1, p0], d, True, wd=config.wd, input_keep_prob=config.input_keep_prob,
-                                mask=self.x_mask, is_train=self.is_train, func=config.answer_func, scope='logits1')
-            a1i = softsel(tf.reshape(g1, [N, M * JX, 2 * d]), tf.reshape(logits, [N, M * JX]))
-            a1i = tf.tile(tf.expand_dims(tf.expand_dims(a1i, 1), 1), [1, M, JX, 1])
+            # 6.Output Layer
+            # 输入有Dropout
+            # 在默认的配置下，config.answer_func=‘linear’
+            # logits_t = w^T_{(p^1)} [M_{:t};G_{:t}] + b_{(p^1)}
+            # logits:[N, M, JX]
+            # 对文章中的每个词分配未归一化的Attention
+            logits = get_logits(
+                [g1, p0], # [N, M, JX, 10d]
+                d,
+                True,
+                wd=config.wd,
+                input_keep_prob=config.input_keep_prob,
+                mask=self.x_mask,
+                is_train=self.is_train,
+                func=config.answer_func, # linear
+                scope='logits1'
+            )
+            # 根据logits计算整个文章的表达
+            # a1i:[N,2d]
+            a1i = softsel(
+                tf.reshape(
+                    g1,
+                    [N, M * JX, 2 * d]
+                ),
+                tf.reshape(
+                    logits,
+                    [N, M * JX]
+                )
+            )
+            # a1i:[N,M,JX,2d]复制M*JX份
+            a1i = tf.tile(
+                tf.expand_dims(
+                    tf.expand_dims(a1i, 1),
+                    1
+                ),
+                [1, M, JX, 1]
+            )
+            # ([N, M, JX, d],[N, M, JX, d])
+            (fw_g2, bw_g2), _ = bidirectional_dynamic_rnn(
+                d_cell4_fw,
+                d_cell4_bw,
+                tf.concat(
+                    axis=3,
+                    values=[p0, g1, a1i, g1 * a1i]
+                ),# [N,M,JX,14d],[G_{:t};M_{:t};a1i;M_{:t} \odot a1i]
+                x_len,
+                dtype='float',
+                scope='g2'
+            )
             # [N, M, JX, 2d]
-            (fw_g2, bw_g2), _ = bidirectional_dynamic_rnn(d_cell4_fw, d_cell4_bw, tf.concat(axis=3, values=[p0, g1, a1i, g1 * a1i]),
-                                                          x_len, dtype='float', scope='g2')
-            g2 = tf.concat(axis=3, values=[fw_g2, bw_g2])
-            logits2 = get_logits([g2, p0], d, True, wd=config.wd, input_keep_prob=config.input_keep_prob,
-                                 mask=self.x_mask,
-                                 is_train=self.is_train, func=config.answer_func, scope='logits2')
+            # 论文中的M^2
+            g2 = tf.concat(
+                axis=3,
+                values=[fw_g2, bw_g2]
+            )
+            # logits2_t = w^T_{(p^2)} [M^2_{:t};G_{:t}] + b_{(p^2)}
+            # 在默认的配置下，config.answer_func=‘linear’
+            # 输入有Dropout
+            # logits2:[N,M,JX]
+            logits2 = get_logits(
+                [g2, p0],
+                d,
+                True,
+                wd=config.wd,
+                input_keep_prob=config.input_keep_prob,
+                mask=self.x_mask,
+                is_train=self.is_train,
+                func=config.answer_func,# ‘linear’
+                scope='logits2'
+            )
 
+            # [N,M*JX]，对文章中的每个词分配Attention
             flat_logits = tf.reshape(logits, [-1, M * JX])
-            flat_yp = tf.nn.softmax(flat_logits)  # [-1, M*JX]
+            flat_yp = tf.nn.softmax(flat_logits)
+            # [N,M*JX]，对文章中的每个词分配Attention
             flat_logits2 = tf.reshape(logits2, [-1, M * JX])
             flat_yp2 = tf.nn.softmax(flat_logits2)
 
@@ -678,7 +759,8 @@ class Model(object):
             for each in (word, word.lower(), word.capitalize(), word.upper()):
                 if each in d:
                     return d[each]
-            # todo:看来shared['new_word2idx']是跟在shared['word2idx']之后编号的
+            # 模型的创建过程中吧word2idx_embedding和new_word2idx_embedding两个矩阵拼在了一起
+            # 所以word2idx中如果没有查到某个词，可以在new_word2idx中查找并加上word2idx的长度作为偏移
             if config.use_glove_for_unk:
                 d2 = batch.shared['new_word2idx']
                 for each in (word, word.lower(), word.capitalize(), word.upper()):
@@ -763,7 +845,7 @@ def bi_attention(
         tensor_dict=None
 ):
     '''
-    这里的attention计算没有Dropout
+    计算c2q和q2c的Attention，这里的attention计算没有Dropout
     :param config:
     :param is_train:
     :param h:文章中每个词的编码，[N,M,JX,2d]
@@ -772,7 +854,7 @@ def bi_attention(
     :param u_mask:[N,JQ]
     :param scope:
     :param tensor_dict:
-    :return:
+    :return:(u_a:[N,M,JX,2d](c2q),h_a:[N,M,JX,2d](q2c))
     '''
     with tf.variable_scope(scope or "bi_attention"):
         JX = tf.shape(h)[2]
@@ -810,7 +892,8 @@ def bi_attention(
             # hu_mask:[N,M,JX,JQ]，表明文章中每一句某个词对应的某个问题的某个词是否存在答案
             hu_mask = h_mask_aug & u_mask_aug
 
-        #  没有Dropout
+        # 没有Dropout
+        # u_logits:[N,M,JX,JQ]
         u_logits = get_logits(
             [h_aug, u_aug],
             None,
@@ -821,16 +904,34 @@ def bi_attention(
             func=config.logit_func,
             scope='u_logits'
         )
-        u_a = softsel(u_aug, u_logits)  # [N, M, JX, d]
-        h_a = softsel(h, tf.reduce_max(u_logits, 3))  # [N, M, d]
-        h_a = tf.tile(tf.expand_dims(h_a, 2), [1, 1, JX, 1])
+        # [N,M,JX,2d]，对文章中的每个词，得到问题的表达，对应文章中的\tilde{U}
+        u_a = softsel(u_aug, u_logits)
+        # [N,M,2d]，对整个问题，得到文章的表达
+        # 如果这里的M不为1，那么得到结果是有问题的，这是计算对整个问题，某个句子的表达
+        h_a = softsel(
+            # h:[N,M,JX,2d]
+            h,
+            # 对文章中的每个词，得到对整个问题的最大的匹配值
+            # [N,M,JX]
+            tf.reduce_max(u_logits, 3)
+        )
+        # h_a:[N,M,JX,2d]，对应文章中的\tilde{H}
+        h_a = tf.tile(
+            tf.expand_dims(h_a, 2),
+            [1, 1, JX, 1]
+        )
 
         if tensor_dict is not None:
-            a_u = tf.nn.softmax(u_logits)  # [N, M, JX, JQ]
+            # [N,M,JX,JQ]，文章中的某个词，对问题中的每个词的Attention，对应论文中的a_t
+            a_u = tf.nn.softmax(u_logits)
+            # [N,M,JX]，整个问题对文章中每个词的Attention，对应论文中的b
             a_h = tf.nn.softmax(tf.reduce_max(u_logits, 3))
             tensor_dict['a_u'] = a_u
             tensor_dict['a_h'] = a_h
-            variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=tf.get_variable_scope().name)
+            variables = tf.get_collection(
+                tf.GraphKeys.GLOBAL_VARIABLES,
+                scope=tf.get_variable_scope().name
+            )
             for var in variables:
                 tensor_dict[var.name] = var
 
@@ -848,7 +949,7 @@ def attention_layer(
         tensor_dict=None
 ):
     '''
-
+    通过控制config.q2c_att、config.c2q_att、config.logit_func，进行文章中的Ablations实验
     :param config:
     :param is_train:
     :param h: 文章中每个词的编码，[N,M,JX,2d]
@@ -857,7 +958,7 @@ def attention_layer(
     :param u_mask: [N,JQ]
     :param scope:
     :param tensor_dict:
-    :return:
+    :return:论文中的\beta(h,\tilde{u},\tilde{h})，[N,M,JX,nd]
     '''
     with tf.variable_scope(scope or "attention_layer"):
         JX = tf.shape(h)[2]
@@ -874,9 +975,30 @@ def attention_layer(
                 tensor_dict=tensor_dict
             )
         if not config.c2q_att:
-            u_a = tf.tile(tf.expand_dims(tf.expand_dims(tf.reduce_mean(u, 1), 1), 1), [1, M, JX, 1])
+            # u_a:[N,M,JX,2d]，对文章中的每个词，得到问题的表达
+            u_a = tf.tile(
+                tf.expand_dims( # [N,1,1,2d]
+                    tf.expand_dims( # [N,1,2d]
+                        # \tilde{u} = \sum_j U_{:j}
+                        tf.reduce_mean(u, 1), # [N,2d],对2d中每一个元素求出JQ轴上的平均
+                        1
+                    ),
+                    1
+                ),
+                [1, M, JX, 1]
+            )
+        # \beta(h,\tilde{u},\tilde{h}) = [h;\tilde{u};h \odot \tilde{u};h \odot \tilde{h}]
         if config.q2c_att:
-            p0 = tf.concat(axis=3, values=[h, u_a, h * u_a, h * h_a])
+            # [N,M,JX,8d]
+            p0 = tf.concat(
+                axis=3,
+                values=[h, u_a, h * u_a, h * h_a]
+            )
+        # \beta(h,\tilde{u},\tilde{h}) = [h;\tilde{u};h \odot \tilde{u}]
         else:
-            p0 = tf.concat(axis=3, values=[h, u_a, h * u_a])
+            # [N,M,JX,6d]
+            p0 = tf.concat(
+                axis=3,
+                values=[h, u_a, h * u_a]
+            )
         return p0
