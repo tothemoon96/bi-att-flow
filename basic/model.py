@@ -21,6 +21,7 @@ def get_multi_gpu_models(config):
             if gpu_idx > 0:
                 # 在其它gpu上创建模型时重用变量
                 tf.get_variable_scope().reuse_variables()
+            # 在第一次创建模型时打开移动平均
             model = Model(config, scope, rep=gpu_idx == 0)
             models.append(model)
 
@@ -32,7 +33,7 @@ class Model(object):
         '''
         :param config:
         :param scope:
-        :param rep: 是否创建全新的变量
+        :param rep: 是否进行移动平均
         '''
         self.scope = scope
         self.config = config
@@ -67,11 +68,11 @@ class Model(object):
         self.cq = tf.placeholder('int32', [N, None, W], name='cq')
         # 问题：[第几个样本，第几个词]，问题中哪些词转化成了token
         self.q_mask = tf.placeholder('bool', [N, None], name='q_mask')
-        # 答案：[第几个样本，第几个词，第几个单词]，起始单词为True
+        # 答案：[第几个样本，第几个词，第几个词]，起始单词为True
         self.y = tf.placeholder('bool', [N, None, None], name='y')
-        # 答案：[第几个样本，第几个词，第几个单词]，终止单词为True
+        # 答案：[第几个样本，第几个词，第几个词]，终止单词为True
         self.y2 = tf.placeholder('bool', [N, None, None], name='y2')
-        # 答案：[第几个样本，第几个词，第几个单词]，整个答案跨越的词的span为True
+        # 答案：[第几个样本，第几个词，第几个词]，整个答案跨越的词的span为True
         self.wy = tf.placeholder('bool', [N, None, None], name='wy')
         self.is_train = tf.placeholder('bool', [], name='is_train')
         # config.word_emb_size词向量的维度
@@ -94,16 +95,27 @@ class Model(object):
         self._build_forward()
         self._build_loss()
         self.var_ema = None
-        # 创建全新的变量
+        # todo:这下面的两个移动平均不清楚有什么用
         if rep:
             self._build_var_ema()
         if config.mode == 'train':
             self._build_ema()
 
+        # todo:没搞懂这里为什么要merge两次
         self.summary = tf.summary.merge_all()
-        self.summary = tf.summary.merge(tf.get_collection("summaries", scope=self.scope))
+        self.summary = tf.summary.merge(
+            # todo:这样能够得到summaries吗
+            tf.get_collection(
+                "summaries",
+                scope=self.scope
+            )
+        )
 
     def _build_forward(self):
+        '''
+        构建整个网络
+        :return:
+        '''
         config = self.config
         # N:batch的大小
         # M:每一段最多有多少个句子
@@ -514,25 +526,68 @@ class Model(object):
             flat_logits2 = tf.reshape(logits2, [-1, M * JX])
             flat_yp2 = tf.nn.softmax(flat_logits2)
 
+            # 允许没有答案存在
             if config.na:
+                # 添加一个表示na的标量偏置
                 na_bias = tf.get_variable("na_bias", shape=[], dtype='float')
-                na_bias_tiled = tf.tile(tf.reshape(na_bias, [1, 1]), [N, 1])  # [N, 1]
-                concat_flat_logits = tf.concat(axis=1, values=[na_bias_tiled, flat_logits])
+                # na_bias_tiled:[N, 1]复制了N份
+                na_bias_tiled = tf.tile(
+                    tf.reshape(na_bias, [1, 1]),
+                    [N, 1]
+                )
+                # concat_flat_logits:[N,1+M*JX]
+                concat_flat_logits = tf.concat(
+                    axis=1,
+                    values=[na_bias_tiled, flat_logits]
+                )
+                # concat_flat_logits:[N, 1 + M * JX]
                 concat_flat_yp = tf.nn.softmax(concat_flat_logits)
-                na_prob = tf.squeeze(tf.slice(concat_flat_yp, [0, 0], [-1, 1]), [1])
-                flat_yp = tf.slice(concat_flat_yp, [0, 1], [-1, -1])
+                # na_prob:[N]，起始指针选择没有答案的概率
+                na_prob = tf.squeeze(
+                    tf.slice(
+                        concat_flat_yp,
+                        [0, 0],
+                        [-1, 1]
+                    ),
+                    [1]
+                )
+                # flat_yp:[N,M*JX]，选择文中某个词作为答案起始位置的概率
+                flat_yp = tf.slice(
+                    concat_flat_yp,
+                    [0, 1],
+                    [-1, -1]
+                )
 
-                concat_flat_logits2 = tf.concat(axis=1, values=[na_bias_tiled, flat_logits2])
+                concat_flat_logits2 = tf.concat(
+                    axis=1,
+                    values=[na_bias_tiled, flat_logits2]
+                )
                 concat_flat_yp2 = tf.nn.softmax(concat_flat_logits2)
-                na_prob2 = tf.squeeze(tf.slice(concat_flat_yp2, [0, 0], [-1, 1]), [1])  # [N]
-                flat_yp2 = tf.slice(concat_flat_yp2, [0, 1], [-1, -1])
+                # na_prob2:[N]，结束指针选择没有答案的概率
+                na_prob2 = tf.squeeze(
+                    tf.slice(
+                        concat_flat_yp2,
+                        [0, 0],
+                        [-1, 1]
+                    ),
+                    [1]
+                )
+                # flat_yp2:[N,M*JX]，选择文中某个词作为答案结束位置的概率
+                flat_yp2 = tf.slice(
+                    concat_flat_yp2,
+                    [0, 1],
+                    [-1, -1]
+                )
 
                 self.concat_logits = concat_flat_logits
                 self.concat_logits2 = concat_flat_logits2
                 self.na_prob = na_prob * na_prob2
 
+            # yp:[N,M,JX]
             yp = tf.reshape(flat_yp, [-1, M, JX])
+            # yp2:[N,M,JX]
             yp2 = tf.reshape(flat_yp2, [-1, M, JX])
+            # wyp:[N,M,JX]
             wyp = tf.nn.sigmoid(logits2)
 
             self.tensor_dict['g1'] = g1
@@ -550,16 +605,40 @@ class Model(object):
         M = tf.shape(self.x)[1]
         JQ = tf.shape(self.q)[1]
 
-        loss_mask = tf.reduce_max(tf.cast(self.q_mask, 'float'), 1)
+        # [N]，表示某个问题是否有效，有效是1，无效是0
+        loss_mask = tf.reduce_max(
+            tf.cast(self.q_mask, 'float'),
+            1
+        )
+
         if config.wy:
+            # [N,M,JX]，注意这里只使用了self.logits2
             losses = tf.nn.sigmoid_cross_entropy_with_logits(
-                logits=tf.reshape(self.logits2, [-1, M, JX]), labels=tf.cast(self.wy, 'float'))  # [N, M, JX]
-            num_pos = tf.reduce_sum(tf.cast(self.wy, 'float'))
-            num_neg = tf.reduce_sum(tf.cast(self.x_mask, 'float')) - num_pos
+                logits=tf.reshape(self.logits2, [-1, M, JX]),
+                labels=tf.cast(self.wy, 'float')
+            )
+            # 整个数据集中文章里有多少个词是答案
+            num_pos = tf.reduce_sum(
+                tf.cast(self.wy, 'float')
+            )
+            # 整个数据集中文章里有多少个词不是答案
+            num_neg = tf.reduce_sum(
+                tf.cast(self.x_mask, 'float')
+            ) - num_pos
+            # 比例
             damp_ratio = num_pos / num_neg
+            # todo:不懂为什么要这样去damp，而且只用了logits2
             dampened_losses = losses * (
-                (tf.cast(self.x_mask, 'float') - tf.cast(self.wy, 'float')) * damp_ratio + tf.cast(self.wy, 'float'))
+                # [N,M,JX],这些是不是答案的词，值为1，乘上了damp_ratio，把所有这些不是答案的词的值加起来等于num_pos
+                (
+                    tf.cast(self.x_mask, 'float') -
+                    tf.cast(self.wy, 'float')
+                ) * damp_ratio +
+                tf.cast(self.wy, 'float')
+            )
+            # [N]
             new_losses = tf.reduce_sum(dampened_losses, [1, 2])
+            # 过滤掉无效的loss
             ce_loss = tf.reduce_mean(loss_mask * new_losses)
             """
             if config.na:
@@ -576,28 +655,71 @@ class Model(object):
 
         else:
             if config.na:
+                # [N,1]
                 na = tf.reshape(self.na, [-1, 1])
-                concat_y = tf.concat(axis=1, values=[na, tf.reshape(self.y, [-1, M * JX])])
-                losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.concat_logits, labels=tf.cast(concat_y, 'float'))
-                concat_y2 = tf.concat(axis=1, values=[na, tf.reshape(self.y2, [-1, M * JX])])
-                losses2 = tf.nn.softmax_cross_entropy_with_logits(logits=self.concat_logits2, labels=tf.cast(concat_y2, 'float'))
-            else:
+                # [N,1+M*JX]
+
+                concat_y = tf.concat(
+                    axis=1,
+                    values=[
+                        na,
+                        tf.reshape(self.y, [-1, M * JX])
+                    ]
+                )
+                # 答案起始位置loss
                 losses = tf.nn.softmax_cross_entropy_with_logits(
-                    logits=self.logits, labels=tf.cast(tf.reshape(self.y, [-1, M * JX]), 'float'))
+                    logits=self.concat_logits,
+                    labels=tf.cast(concat_y, 'float')
+                )
+
+                concat_y2 = tf.concat(
+                    axis=1,
+                    values=[
+                        na,
+                        tf.reshape(self.y2, [-1, M * JX])
+                    ]
+                )
+                # 答案终止位置loss
                 losses2 = tf.nn.softmax_cross_entropy_with_logits(
-                    logits=self.logits2, labels=tf.cast(tf.reshape(self.y2, [-1, M * JX]), 'float'))
+                    logits=self.concat_logits2,
+                    labels=tf.cast(concat_y2, 'float')
+                )
+            else:
+                # 答案起始位置loss
+                losses = tf.nn.softmax_cross_entropy_with_logits(
+                    logits=self.logits,
+                    labels=tf.cast(
+                        tf.reshape(self.y, [-1, M * JX]),
+                        'float'
+                    )
+                )
+                # 答案终止位置loss
+                losses2 = tf.nn.softmax_cross_entropy_with_logits(
+                    logits=self.logits2,
+                    labels=tf.cast(
+                        tf.reshape(self.y2, [-1, M * JX]),
+                        'float')
+                )
+            # 过滤掉无效的loss
             ce_loss = tf.reduce_mean(loss_mask * losses)
             ce_loss2 = tf.reduce_mean(loss_mask * losses2)
+            # 添加到losses字典
             tf.add_to_collection('losses', ce_loss)
             tf.add_to_collection("losses", ce_loss2)
 
-        self.loss = tf.add_n(tf.get_collection('losses', scope=self.scope), name='loss')
+        # 把这么多losses全部加起来
+        self.loss = tf.add_n(
+            tf.get_collection('losses', scope=self.scope),
+            name='loss'
+        )
+        # 得到loss的summary
         tf.summary.scalar(self.loss.op.name, self.loss)
         tf.add_to_collection('ema/scalar', self.loss)
 
     def _build_ema(self):
         self.ema = tf.train.ExponentialMovingAverage(self.config.decay)
         ema = self.ema
+        # todo:这个collection之前没有创建，会存在吗？
         tensors = tf.get_collection("ema/scalar", scope=self.scope) + tf.get_collection("ema/vector", scope=self.scope)
         ema_op = ema.apply(tensors)
         for var in tf.get_collection("ema/scalar", scope=self.scope):
@@ -607,6 +729,7 @@ class Model(object):
             ema_var = ema.average(var)
             tf.summary.histogram(ema_var.op.name, ema_var)
 
+        # loss必须要在上面的计算完了以后再计算
         with tf.control_dependencies([ema_op]):
             self.loss = tf.identity(self.loss)
 
@@ -614,6 +737,7 @@ class Model(object):
         self.var_ema = tf.train.ExponentialMovingAverage(self.config.var_decay)
         ema = self.var_ema
         ema_op = ema.apply(tf.trainable_variables())
+        # loss必须要在上面的计算完了以后再计算
         with tf.control_dependencies([ema_op]):
             self.loss = tf.identity(self.loss)
 
