@@ -111,6 +111,7 @@ def _train(config):
     graph_handler = GraphHandler(config, model)  # controls all tensors and variables in the graph, including loading /saving
 
     # Variables
+    # 如果变量放置的位置不对，系统自动进行处理
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
     graph_handler.initialize(sess)
 

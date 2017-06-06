@@ -18,6 +18,7 @@ def get_multi_gpu_models(config):
         # 每一块显卡上都创建一份Model
         with tf.name_scope("model_{}".format(gpu_idx)) as scope, \
                 tf.device("/{}:{}".format(config.device_type, gpu_idx)):
+            # todo:模型中卷积层和线性层的变量好像没有在cpu上创建
             if gpu_idx > 0:
                 # 在其它gpu上创建模型时重用变量
                 tf.get_variable_scope().reuse_variables()
@@ -95,16 +96,16 @@ class Model(object):
         self._build_forward()
         self._build_loss()
         self.var_ema = None
-        # todo:这下面的两个移动平均不清楚有什么用
+        # 创建第一个模型时，创建它
         if rep:
             self._build_var_ema()
+        # 平滑显示loss
         if config.mode == 'train':
             self._build_ema()
 
-        # todo:没搞懂这里为什么要merge两次
+        # 默认merge到"summaries"中去了
         self.summary = tf.summary.merge_all()
         self.summary = tf.summary.merge(
-            # todo:这样能够得到summaries吗
             tf.get_collection(
                 "summaries",
                 scope=self.scope
@@ -708,6 +709,7 @@ class Model(object):
             tf.add_to_collection("losses", ce_loss2)
 
         # 把这么多losses全部加起来
+        # 最终的loss只有一个
         self.loss = tf.add_n(
             tf.get_collection('losses', scope=self.scope),
             name='loss'
@@ -719,9 +721,10 @@ class Model(object):
     def _build_ema(self):
         self.ema = tf.train.ExponentialMovingAverage(self.config.decay)
         ema = self.ema
-        # todo:这个collection之前没有创建，会存在吗？
+        # 初始化计算图之后"ema/scalar"中只有self.loss
         tensors = tf.get_collection("ema/scalar", scope=self.scope) + tf.get_collection("ema/vector", scope=self.scope)
         ema_op = ema.apply(tensors)
+        # 初始化计算图之后"ema/scalar"中只有self.loss，对它进行移动平均应该是为了平滑显示
         for var in tf.get_collection("ema/scalar", scope=self.scope):
             ema_var = ema.average(var)
             tf.summary.scalar(ema_var.op.name, ema_var)
@@ -734,6 +737,10 @@ class Model(object):
             self.loss = tf.identity(self.loss)
 
     def _build_var_ema(self):
+        '''
+        对所有可以训练的变量进行移动平均
+        :return:
+        '''
         self.var_ema = tf.train.ExponentialMovingAverage(self.config.var_decay)
         ema = self.var_ema
         ema_op = ema.apply(tf.trainable_variables())
@@ -755,7 +762,7 @@ class Model(object):
         这里可以看到placeholder和batch之间的对应关系
         :param batch:
         :param is_train:
-        :param supervised:
+        :param supervised:知道正确的答案
         :return:
         '''
         assert isinstance(batch, DataSet)

@@ -46,15 +46,23 @@ class MultiGPUTrainer(object):
         self.models = models
         losses = []
         grads_list = []
+        # 对每一个显卡上的模型
         for gpu_idx, model in enumerate(models):
-            with tf.name_scope("grads_{}".format(gpu_idx)), tf.device("/{}:{}".format(config.device_type, gpu_idx)):
+            with tf.name_scope(
+                    "grads_{}".format(gpu_idx)
+            ), \
+                 tf.device(
+                     "/{}:{}".format(config.device_type, gpu_idx)
+                 ):
                 loss = model.get_loss()
+                # 计算梯度
                 grads = self.opt.compute_gradients(loss, var_list=self.var_list)
                 losses.append(loss)
                 grads_list.append(grads)
 
         self.loss = tf.add_n(losses)/len(losses)
         self.grads = average_gradients(grads_list)
+        # 更新梯度，从上下文来看，这个train_op好像是放在CPU上
         self.train_op = self.opt.apply_gradients(self.grads, global_step=self.global_step)
 
     def step(self, sess, batches, get_summary=False):
