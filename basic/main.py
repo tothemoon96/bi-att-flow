@@ -103,16 +103,20 @@ def _train(config):
     print("num params: {}".format(get_num_params()))
 
     trainer = MultiGPUTrainer(config, models)
+    # todo:暂时先不看这里
     evaluator = MultiGPUF1Evaluator(
         config,
         models,
         tensor_dict=model.tensor_dict if config.vis else None
     )
-    graph_handler = GraphHandler(config, model)  # controls all tensors and variables in the graph, including loading /saving
+
+    graph_handler = GraphHandler(config, model)
 
     # Variables
     # 如果变量放置的位置不对，系统自动进行处理
-    sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+    sess = tf.Session(
+        config=tf.ConfigProto(allow_soft_placement=True)
+    )
     graph_handler.initialize(sess)
 
     # Begin training
@@ -170,6 +174,7 @@ def _train(config):
                 graph_handler.dump_eval(e_dev)
             if config.dump_answer:
                 graph_handler.dump_answer(e_dev)
+    # 训练结束，保存模型
     if global_step % config.save_period != 0:
         graph_handler.save(sess, global_step=global_step)
 

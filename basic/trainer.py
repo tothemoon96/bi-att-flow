@@ -63,6 +63,7 @@ class MultiGPUTrainer(object):
         self.loss = tf.add_n(losses)/len(losses)
         self.grads = average_gradients(grads_list)
         # 更新梯度，从上下文来看，这个train_op好像是放在CPU上
+        # self.global_step在这个地方会自己增加global_step
         self.train_op = self.opt.apply_gradients(self.grads, global_step=self.global_step)
 
     def step(self, sess, batches, get_summary=False):

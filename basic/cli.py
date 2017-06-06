@@ -24,11 +24,13 @@ flags.DEFINE_integer("num_gpus", 1, "num of gpus or cpus for computing gradients
 
 # Essential training and test options
 flags.DEFINE_string("mode", "test", "trains | test | forward [test]")
+# 如果不想load，直接加上一个--noload就行了
 flags.DEFINE_boolean("load", True, "load saved data? [True]")
 # 训练数据中整段话不分句，答案限定在有一个句子之中
 # 在默认的语料处理中，已经把文章中的一段压缩到了一个句子之中，这个选项和squash应该打开，这样在Contextual Embedding Layer中，编码文章的LSTM只用在整个段落初始化一次，而不是每一句都初始化，这和论文的方法才是一致的
 flags.DEFINE_bool("single", False, "supervise only the answer sentence? [False]")
 flags.DEFINE_boolean("debug", False, "Debugging mode? [False]")
+# 载入移动平均
 flags.DEFINE_bool('load_ema', True, "load exponential average of variables when testing?  [True]")
 flags.DEFINE_bool("eval", True, "eval? [True]")
 # todo:这个不知道有什么用
@@ -73,6 +75,7 @@ flags.DEFINE_boolean("progress", True, "Show progress? [True]")
 flags.DEFINE_integer("log_period", 100, "Log period [100]")
 flags.DEFINE_integer("eval_period", 1000, "Eval period [1000]")
 flags.DEFINE_integer("save_period", 1000, "Save Period [1000]")
+# 保存最近多少次存档点
 flags.DEFINE_integer("max_to_keep", 20, "Max recent saves to keep [20]")
 flags.DEFINE_bool("dump_eval", True, "dump eval? [True]")
 flags.DEFINE_bool("dump_answer", True, "dump answer? [True]")

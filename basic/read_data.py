@@ -129,7 +129,7 @@ class DataSet(object):
                 i for i in next(batch_idx_tuples) if i is not None
             )
             batch_data = self.get_by_idxs(batch_idxs)
-            # 存储文章的对应内容的一个dict，距离如下
+            # 存储文章的对应内容的一个dict，举例如下
             # {
             #     x:[（每一个样本）
             #           [（每一句）

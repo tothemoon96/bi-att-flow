@@ -12,6 +12,10 @@ import pickle
 
 
 class GraphHandler(object):
+    '''
+    一个辅助类
+    controls all tensors and variables in the graph, including loading /saving
+    '''
     def __init__(self, config, model):
         self.config = config
         self.model = model
@@ -21,9 +25,11 @@ class GraphHandler(object):
 
     def initialize(self, sess):
         sess.run(tf.global_variables_initializer())
+        # 如果载入之前的数据
         if self.config.load:
             self._load(sess)
 
+        # 如果是在训练
         if self.config.mode == 'train':
             self.writer = tf.summary.FileWriter(self.config.log_dir, graph=tf.get_default_graph())
 
@@ -33,12 +39,19 @@ class GraphHandler(object):
 
     def _load(self, sess):
         config = self.config
-        vars_ = {var.name.split(":")[0]: var for var in tf.global_variables()}
+        # {变量名:变量的引用}
+        vars_ = {
+            var.name.split(":")[0]:
+                var for var in tf.global_variables()
+        }
+        # 载入所有变量的移动平均
         if config.load_ema:
             ema = self.model.var_ema
+            # 将vars_某个变量替换成移动平均的版本
             for var in tf.trainable_variables():
                 del vars_[var.name.split(":")[0]]
                 vars_[ema.average_name(var)] = var
+        # 在这里指明要载入哪些变量
         saver = tf.train.Saver(vars_, max_to_keep=config.max_to_keep)
 
         if config.load_path:
