@@ -141,13 +141,33 @@ def get_best_span(ypi, yp2i):
 
 
 def get_best_span_wy(wypi, th):
+    '''
+    使用sigmoid进行二分类来确定答案的范围，超过th的区域作为答案，如果能找到多个范围，选择平均激活值最大的范围作为答案，不跨句子选取答案（详情见下面的注释）
+    :param wypi: [M,JX]
+    :param th:Threshold
+    :return:((答案开始句子索引，答案开始词索引),(答案结束句子索引，答案结束词索引+1),平均激活值)
+    '''
+    # chunk_spans:
+    # [
+    #   ((答案开始句子索引，答案开始词索引),(答案结束句子索引，答案结束词索引+1)),
+    #   ...
+    # ]
     chunk_spans = []
+    # scores:
+    # [某个答案的平均激活值,...]
     scores = []
     chunk_start = None
     score = 0
     l = 0
+    # 某个部分作为答案的一个阈值
     th = min(th, np.max(wypi))
+    # wypif:[JX]
+    # f:第几句
+    # 设定一个作为答案的阈值，按照句子为单位选取答案
+    # 如果激活值超过了th，并且在一个句子内，这个句子里的该部分作为答案，chunk_spans存储切片值
+    # 如果激活的范围跨越了几个句子，那么chunk_spans分别存储每个句子中的激活部分，不跨句子
     for f, wypif in enumerate(wypi):
+        # j:第几个词
         for j, wypifj in enumerate(wypif):
             if wypifj >= th:
                 if chunk_start is None:
@@ -157,20 +177,27 @@ def get_best_span_wy(wypi, th):
             else:
                 if chunk_start is not None:
                     chunk_stop = f, j
-                    chunk_spans.append((chunk_start, chunk_stop))
+                    chunk_spans.append(
+                        (chunk_start, chunk_stop)
+                    )
                     scores.append(score/l)
                     score = 0
                     l = 0
                     chunk_start = None
         if chunk_start is not None:
             chunk_stop = f, j+1
-            chunk_spans.append((chunk_start, chunk_stop))
+            chunk_spans.append(
+                (chunk_start, chunk_stop)
+            )
             scores.append(score/l)
             score = 0
             l = 0
             chunk_start = None
-
-    return max(zip(chunk_spans, scores), key=lambda pair: pair[1])
+    # 选择最好的答案作为返回值
+    return max(
+        zip(chunk_spans, scores),
+        key=lambda pair: pair[1]
+    )
 
 
 def get_span_score_pairs(ypi, yp2i):

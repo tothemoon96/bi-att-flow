@@ -90,7 +90,7 @@ class DataSet(object):
         :param num_batches:需要多少个这样的batch
         :param shuffle:是否打乱数据
         :param cluster: cluster examples by their lengths; this might give performance boost (i.e. faster training).
-        :return:包含batch的中每个样本索引的tuple，存储batch真实内容的一个DataSet
+        :return:包含batch的中每个样本索引的tuple，存储batch真实内容的一个DataSet，数据结构:[样本点索引],DataSet
         """
         # 每个epoch需要多少个batch
         num_batches_per_epoch = int(math.ceil(self.num_examples / batch_size))
@@ -176,13 +176,13 @@ class DataSet(object):
             cluster=False
     ):
         '''
-
+        返回的元组中每个元素都是一个get_batches的生成器
         :param batch_size:
         :param num_batches_per_step: 每个step有几个batch
         :param num_steps:
         :param shuffle:
         :param cluster:
-        :return:(([样本点索引],DataSet),...（num_batches_per_step个这样的tuple）)
+        :return:(get_batches的生成器,...（num_batches_per_step个这样的生成器）)
         '''
         batch_size_per_step = batch_size * num_batches_per_step
         batches = self.get_batches(
@@ -192,7 +192,7 @@ class DataSet(object):
             cluster=cluster
         )
         # 把batches按照顺序拆分成num_batches_per_step组小batch
-        # (([样本点索引],DataSet),...（num_batches_per_step个这样的tuple))
+        # (get_batches的生成器,...（num_batches_per_step个这样的生成器）)
         multi_batches = (
             tuple(
                 zip(
@@ -219,7 +219,7 @@ class DataSet(object):
 
     def __add__(self, other):
         '''
-        将几个DataSet合并
+        将几个DataSet合并，valid_idxs重新计算了一遍
         :param other:另外一个DataSet
         :return:
         '''

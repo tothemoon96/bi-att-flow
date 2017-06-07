@@ -37,6 +37,7 @@ flags.DEFINE_bool("eval", True, "eval? [True]")
 flags.DEFINE_bool("wy", False, "Use wy for loss / eval? [False]")
 # 回答的时候把无答案也考虑进去
 flags.DEFINE_bool("na", False, "Enable no answer strategy and learn bias? [False]")
+# todo:和wy有关
 flags.DEFINE_float("th", 0.5, "Threshold [0.5]")
 
 # Training / test parameters

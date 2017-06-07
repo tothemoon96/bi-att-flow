@@ -590,7 +590,7 @@ class Model(object):
             yp = tf.reshape(flat_yp, [-1, M, JX])
             # yp2:[N,M,JX]
             yp2 = tf.reshape(flat_yp2, [-1, M, JX])
-            # wyp:[N,M,JX]
+            # wyp:[N,M,JX]，这是一个二分类，可能利用二分类结果得到答案吧
             wyp = tf.nn.sigmoid(logits2)
 
             self.tensor_dict['g1'] = g1

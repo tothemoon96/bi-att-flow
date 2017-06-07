@@ -385,7 +385,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     # y:
     # [（每个问题）
     #   [（每个备选答案）
-    #       [（句号，词号），（句号，词号）]
+    #       [（答案起始位置句号，答案起始位置词号），（答案结束位置句号，答案结束位置词号+1）]
     #   ]
     # ]
 
@@ -404,7 +404,7 @@ def prepro_each(args, data_type, start_ratio=0.0, stop_ratio=1.0, out_name="defa
     #   [（每个备选答案）
     #       [
     #           真实答案起始位置对应的起始词内索引,
-    #           真实答案结束位置对应的起始词内索引
+    #           真实答案结束位置对应的终止词内索引
     #       ]
     #   ]
     # ]

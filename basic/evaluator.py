@@ -259,14 +259,36 @@ class F1Evaluation(AccuracyEvaluation):
         new_y = self.y + other.y
         new_correct = self.correct + other.correct
         new_f1s = self.f1s + other.f1s
-        new_loss = (self.loss * self.num_examples + other.loss * other.num_examples) / len(new_correct)
-        new_id2answer_dict = dict(list(self.id2answer_dict.items()) + list(other.id2answer_dict.items()))
-        new_id2score_dict = dict(list(self.id2answer_dict['scores'].items()) + list(other.id2answer_dict['scores'].items()))
+        new_loss = (
+                       self.loss * self.num_examples + other.loss * other.num_examples
+                   ) / len(new_correct)
+        new_id2answer_dict = dict(
+            list(self.id2answer_dict.items()) +
+            list(other.id2answer_dict.items())
+        )
+        new_id2score_dict = dict(
+            list(self.id2answer_dict['scores'].items()) +
+            list(other.id2answer_dict['scores'].items())
+        )
         new_id2answer_dict['scores'] = new_id2score_dict
         if 'na' in self.id2answer_dict:
-            new_id2na_dict = dict(list(self.id2answer_dict['na'].items()) + list(other.id2answer_dict['na'].items()))
+            new_id2na_dict = dict(
+                list(self.id2answer_dict['na'].items()) +
+                list(other.id2answer_dict['na'].items())
+            )
             new_id2answer_dict['na'] = new_id2na_dict
-        e = F1Evaluation(self.data_type, self.global_step, new_idxs, new_yp, new_yp2, new_y, new_correct, new_loss, new_f1s, new_id2answer_dict)
+        e = F1Evaluation(
+            self.data_type,
+            self.global_step,
+            new_idxs,
+            new_yp,
+            new_yp2,
+            new_y,
+            new_correct,
+            new_loss,
+            new_f1s,
+            new_id2answer_dict
+        )
         if 'wyp' in self.dict:
             new_wyp = self.dict['wyp'] + other.dict['wyp']
             e.dict['wyp'] = new_wyp
@@ -316,17 +338,47 @@ class F1Evaluator(LabeledEvaluator):
                     ],
                     feed_dict=feed_dict
                 )
+        # y:
+        # [（每一个样本->每个问题）
+        #   [（每个备选答案）
+        #       [（句号，词号），（句号，词号）]
+        #   ]
+        # ]
         y = data_set.data['y']
         if self.config.squash:
             new_y = []
+            # x:
+            # [（每一个样本）
+            #       [（每一句）
+            #             [（每一句中的每一个词用str表示）
+            #                   xxx,xxx,xxx,xxx
+            #             ],...
+            #       ]
+            # ]
             for xi, yi in zip(data_set.data['x'], y):
                 new_yi = []
                 for start, stop in yi:
-                    start_offset = sum(map(len, xi[:start[0]]))
-                    stop_offset = sum(map(len, xi[:stop[0]]))
+                    # 计算答案开始的句子前一共有多少个词
+                    start_offset = sum(
+                        map(
+                            len,
+                            xi[:start[0]]
+                        )
+                    )
+                    # 计算答案结束的句子前一共有多少个词
+                    stop_offset = sum(
+                        map(
+                            len,
+                            xi[:stop[0]]
+                        )
+                    )
+                    # 答案开始的词的索引
                     new_start = 0, start_offset + start[1]
+                    # 答案结束的词的索引+1
                     new_stop = 0, stop_offset + stop[1]
+                    # 存储某个问题的所有每个答案
                     new_yi.append((new_start, new_stop))
+                # 存储所有问题的答案
                 new_y.append(new_yi)
             y = new_y
         if self.config.single:
@@ -340,11 +392,36 @@ class F1Evaluator(LabeledEvaluator):
                 new_y.append(new_yi)
             y = new_y
 
-        yp, yp2, wyp = yp[:data_set.num_examples], yp2[:data_set.num_examples], wyp[:data_set.num_examples]
+        # 此时的y:
+        # [（每一个样本->每个问题）
+        #   [（每个备选答案）
+        #       [答案起始位置词索引，答案终止位置词索引]
+        #   ]
+        # ]
+        yp, yp2, wyp = yp[:data_set.num_examples], \
+                       yp2[:data_set.num_examples], \
+                       wyp[:data_set.num_examples]
         if self.config.wy:
-            spans, scores = zip(*[get_best_span_wy(wypi, self.config.th) for wypi in wyp])
+            # wyp:[N,M,JX]
+            spans, scores = zip(
+                *[
+                    get_best_span_wy(
+                        wypi,
+                        self.config.th
+                    )
+                    for wypi in wyp
+                ]
+            )
         else:
-            spans, scores = zip(*[get_best_span(ypi, yp2i) for ypi, yp2i in zip(yp, yp2)])
+            spans, scores = zip(
+                *[
+                    get_best_span(
+                        ypi,
+                        yp2i
+                    )
+                    for ypi, yp2i in zip(yp, yp2)
+                ]
+            )
 
         def _get(xi, span):
             if len(xi) <= span[0][0]:
@@ -360,18 +437,62 @@ class F1Evaluator(LabeledEvaluator):
                 return ""
             return get_phrase(context, xi, span)
 
-        id2answer_dict = {id_: _get2(context, xi, span)
-                          for id_, xi, span, context in zip(data_set.data['ids'], data_set.data['x'], spans, data_set.data['p'])}
-        id2score_dict = {id_: score for id_, score in zip(data_set.data['ids'], scores)}
+        id2answer_dict = {
+            id_: _get2(context, xi, span)
+            for id_, xi, span, context in
+            zip(
+                data_set.data['ids'],
+                data_set.data['x'],
+                spans,
+                data_set.data['p']
+            )
+        }
+        id2score_dict = {
+            id_: score
+            for id_, score in
+            zip(
+                data_set.data['ids'],
+                scores
+            )
+        }
         id2answer_dict['scores'] = id2score_dict
         if self.config.na:
-            id2na_dict = {id_: float(each) for id_, each in zip(data_set.data['ids'], na)}
+            id2na_dict = {
+                id_: float(each)
+                for id_, each in
+                zip(
+                    data_set.data['ids'],
+                    na
+                )
+            }
             id2answer_dict['na'] = id2na_dict
-        correct = [self.__class__.compare2(yi, span) for yi, span in zip(y, spans)]
-        f1s = [self.__class__.span_f1(yi, span) for yi, span in zip(y, spans)]
-        tensor_dict = dict(zip(self.tensor_dict.keys(), vals))
-        e = F1Evaluation(data_set.data_type, int(global_step), idxs, yp.tolist(), yp2.tolist(), y,
-                         correct, float(loss), f1s, id2answer_dict, tensor_dict=tensor_dict)
+        correct = [
+            self.__class__.compare2(yi, span)
+            for yi, span in zip(y, spans)
+        ]
+        f1s = [
+            self.__class__.span_f1(yi, span)
+            for yi, span in zip(y, spans)
+        ]
+        tensor_dict = dict(
+            zip(
+                self.tensor_dict.keys(),
+                vals
+            )
+        )
+        e = F1Evaluation(
+            data_set.data_type,
+            int(global_step),
+            idxs,
+            yp.tolist(),
+            yp2.tolist(),
+            y,
+            correct,
+            float(loss),
+            f1s,
+            id2answer_dict,
+            tensor_dict=tensor_dict
+        )
         if self.config.wy:
             e.dict['wyp'] = wyp.tolist()
         return e
@@ -464,8 +585,16 @@ class MultiGPUF1Evaluator(F1Evaluator):
         return idxs, data_set
 
     def _get_feed_dict(self, batches):
+        '''
+        从多个batch中得到feed_dict
+        :param batches: (([样本点索引],DataSet),...（num_batches_per_step个这样的tuple))
+        :return:
+        '''
         feed_dict = {}
-        for model, (_, data_set) in zip(self.models, batches):
+        for model, (_, data_set) in zip(
+                self.models,
+                batches
+        ):
             feed_dict.update(model.get_feed_dict(data_set, False))
         return feed_dict
 
