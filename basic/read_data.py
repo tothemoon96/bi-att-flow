@@ -182,7 +182,7 @@ class DataSet(object):
         :param num_steps:
         :param shuffle:
         :param cluster:
-        :return:
+        :return:(([样本点索引],DataSet),...（num_batches_per_step个这样的tuple）)
         '''
         batch_size_per_step = batch_size * num_batches_per_step
         batches = self.get_batches(
@@ -192,7 +192,7 @@ class DataSet(object):
             cluster=cluster
         )
         # 把batches按照顺序拆分成num_batches_per_step组小batch
-        # (([样本点索引],DataSet),...（num_batches_per_step个这样的tuple）)
+        # (([样本点索引],DataSet),...（num_batches_per_step个这样的tuple))
         multi_batches = (
             tuple(
                 zip(
@@ -218,6 +218,12 @@ class DataSet(object):
         return DataSet(data, self.data_type, shared=self.shared)
 
     def __add__(self, other):
+        '''
+        将几个DataSet合并
+        :param other:另外一个DataSet
+        :return:
+        '''
+        # self.data后面拼上other.data
         if isinstance(self.data, dict):
             data = {key: val + other.data[key] for key, val in self.data.items()}
         elif isinstance(self.data, Data):
@@ -225,7 +231,12 @@ class DataSet(object):
         else:
             raise Exception()
 
-        valid_idxs = list(self.valid_idxs) + [valid_idx + self.num_examples for valid_idx in other.valid_idxs]
+        # 将other的valid_idxs加上self.valid_idxs的偏移
+        valid_idxs = list(self.valid_idxs) + \
+                     [
+                         valid_idx + self.num_examples
+                         for valid_idx in other.valid_idxs
+                     ]
         return DataSet(data, self.data_type, shared=self.shared, valid_idxs=valid_idxs)
 
     def divide(self, integer):
@@ -235,7 +246,12 @@ class DataSet(object):
         :return:分组后的DataSet的tuple
         '''
         batch_size = int(math.ceil(self.num_examples / integer))
-        idxs_gen = grouper(self.valid_idxs, batch_size, shorten=True, num_groups=integer)
+        idxs_gen = grouper(
+            self.valid_idxs,
+            batch_size,
+            shorten=True,
+            num_groups=integer
+        )
         data_gen = (self.get_by_idxs(idxs) for idxs in idxs_gen)
         ds_tuple = tuple(DataSet(data, self.data_type, shared=self.shared) for data in data_gen)
         return ds_tuple

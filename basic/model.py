@@ -82,10 +82,12 @@ class Model(object):
         self.na = tf.placeholder('bool', [N], name='na')
 
         # Define misc
+        # 存放了每一层网络的输入输出
         self.tensor_dict = {}
 
         # Forward outputs / loss inputs
         self.logits = None
+        # self.yp:[N,M,JX]，存放答案起始位置的分布
         self.yp = None
         self.var_list = None
         self.na_prob = None

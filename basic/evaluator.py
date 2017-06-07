@@ -102,19 +102,55 @@ class Evaluator(object):
         self.model = model
         self.global_step = model.global_step
         self.yp = model.yp
-        self.tensor_dict = {} if tensor_dict is None else tensor_dict
+        self.tensor_dict = \
+            {} if tensor_dict is None else tensor_dict
 
     def get_evaluation(self, sess, batch):
         idxs, data_set = batch
-        feed_dict = self.model.get_feed_dict(data_set, False, supervised=False)
-        global_step, yp, vals = sess.run([self.global_step, self.yp, list(self.tensor_dict.values())], feed_dict=feed_dict)
+        feed_dict = self.model.get_feed_dict(
+            data_set,
+            False,
+            supervised=False
+        )
+        global_step, yp, vals = sess.run(
+            [
+                self.global_step,
+                self.yp,
+                list(self.tensor_dict.values())
+            ],
+            feed_dict=feed_dict
+        )
         yp = yp[:data_set.num_examples]
-        tensor_dict = dict(zip(self.tensor_dict.keys(), vals))
-        e = Evaluation(data_set.data_type, int(global_step), idxs, yp.tolist(), tensor_dict=tensor_dict)
+        # 获得tensor_dict的计算结果
+        tensor_dict = dict(
+            # [[key,value],...]
+            zip(
+                self.tensor_dict.keys(),
+                vals
+            )
+        )
+        e = Evaluation(
+            data_set.data_type,
+            int(global_step),
+            idxs,
+            yp.tolist(),
+            tensor_dict=tensor_dict
+        )
         return e
 
     def get_evaluation_from_batches(self, sess, batches):
-        e = sum(self.get_evaluation(sess, batch) for batch in batches)
+        '''
+        对每个gpu上的batch进行处理
+        :param sess:
+        :param batches:
+        :return:
+        '''
+        e = sum(
+            self.get_evaluation(
+                sess,
+                batch
+            ) for batch in batches
+        )
         return e
 
 
@@ -254,9 +290,32 @@ class F1Evaluator(LabeledEvaluator):
         assert isinstance(data_set, DataSet)
         feed_dict = self._get_feed_dict(batch)
         if self.config.na:
-            global_step, yp, yp2, wyp, loss, na, vals = sess.run([self.global_step, self.yp, self.yp2, self.wyp, self.loss, self.na, list(self.tensor_dict.values())], feed_dict=feed_dict)
+            global_step, yp, yp2, wyp, loss, na, vals = \
+                sess.run(
+                    [
+                        self.global_step,
+                        self.yp,
+                        self.yp2,
+                        self.wyp,
+                        self.loss,
+                        self.na,
+                        list(self.tensor_dict.values())
+                    ],
+                    feed_dict=feed_dict
+                )
         else:
-            global_step, yp, yp2, wyp, loss, vals = sess.run([self.global_step, self.yp, self.yp2, self.wyp, self.loss, list(self.tensor_dict.values())], feed_dict=feed_dict)
+            global_step, yp, yp2, wyp, loss, vals = \
+                sess.run(
+                    [
+                        self.global_step,
+                        self.yp,
+                        self.yp2,
+                        self.wyp,
+                        self.loss,
+                        list(self.tensor_dict.values())
+                    ],
+                    feed_dict=feed_dict
+                )
         y = data_set.data['y']
         if self.config.squash:
             new_y = []
@@ -358,12 +417,47 @@ class MultiGPUF1Evaluator(F1Evaluator):
         self.models = models
         with tf.name_scope("eval_concat"):
             N, M, JX = config.batch_size, config.max_num_sents, config.max_sent_size
-            self.yp = tf.concat(axis=0, values=[padded_reshape(model.yp, [N, M, JX]) for model in models])
-            self.yp2 = tf.concat(axis=0, values=[padded_reshape(model.yp2, [N, M, JX]) for model in models])
-            self.wy = tf.concat(axis=0, values=[padded_reshape(model.wy, [N, M, JX]) for model in models])
-            self.loss = tf.add_n([model.loss for model in models])/len(models)
+            # [N*gpu数目,M,JX]，存放答案起始位置的分布
+            self.yp = tf.concat(
+                axis=0,
+                values=[
+                    padded_reshape(
+                        model.yp,
+                        [N, M, JX]
+                    ) for model in models
+                ]
+            )
+            # [N*gpu数目,M,JX]，存放答案结束位置的分布
+            self.yp2 = tf.concat(
+                axis=0,
+                values=[
+                    padded_reshape(
+                        model.yp2,
+                        [N, M, JX]
+                    ) for model in models
+                ]
+            )
+            # [N*gpu数目,M,JX]，存放答案跨越的span
+            self.wy = tf.concat(
+                axis=0,
+                values=[
+                    padded_reshape(
+                        model.wy,
+                        [N, M, JX]
+                    ) for model in models
+                ]
+            )
+            # 各个gpu上的loss的平均值
+            self.loss = tf.add_n(
+                [model.loss for model in models]
+            )/ len(models)
 
     def _split_batch(self, batches):
+        '''
+        把batches中各个的内容合并起来batch
+        :param batches: (([样本点索引],DataSet),...（num_batches_per_step个这样的tuple))
+        :return: 合并后的结果([样本点索引],DataSet)
+        '''
         idxs_list, data_sets = zip(*batches)
         idxs = sum(idxs_list, ())
         data_set = sum(data_sets, data_sets[0].get_empty())

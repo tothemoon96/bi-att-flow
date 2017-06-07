@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BookmarkManager">
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="98" />
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="156" />
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="278" />
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="413" />
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="140" />
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="287" />
+    <bookmark url="file://$PROJECT_DIR$/basic/evaluator.py" line="454" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="ca50f347-8917-446a-9aca-e8b1c35f73ba" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/cli.py" afterPath="$PROJECT_DIR$/basic/cli.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/graph_handler.py" afterPath="$PROJECT_DIR$/basic/graph_handler.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/evaluator.py" afterPath="$PROJECT_DIR$/basic/evaluator.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/main.py" afterPath="$PROJECT_DIR$/basic/main.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/model.py" afterPath="$PROJECT_DIR$/basic/model.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/read_data.py" afterPath="$PROJECT_DIR$/basic/read_data.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/basic/trainer.py" afterPath="$PROJECT_DIR$/basic/trainer.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/my/tensorflow/general.py" afterPath="$PROJECT_DIR$/my/tensorflow/general.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -18,7 +27,7 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/bi_att_flow$prepro.coverage" NAME="prepro Coverage Results" MODIFIED="1496107146870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/bi_att_flow$train.coverage" NAME="train Coverage Results" MODIFIED="1496752950035" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/bi_att_flow$train.coverage" NAME="train Coverage Results" MODIFIED="1496816648118" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
     <option name="SHOW_INTERMEDIATE" value="true" />
@@ -50,8 +59,8 @@
             <file leaf-file-name="cli.py" pinned="false" current-in-tab="true">
               <entry file="file://$PROJECT_DIR$/basic/cli.py">
                 <provider selected="true" editor-type-id="text-editor">
-                  <state relative-caret-position="193">
-                    <caret line="35" column="2" lean-forward="false" selection-start-line="35" selection-start-column="2" selection-end-line="35" selection-end-column="2" />
+                  <state relative-caret-position="214">
+                    <caret line="82" column="77" lean-forward="true" selection-start-line="82" selection-start-column="77" selection-end-line="82" selection-end-column="77" />
                     <folding />
                   </state>
                 </provider>
@@ -67,33 +76,161 @@
     <favorites_list name="bi-att-flow" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/basic/main.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-525">
-              <caret line="92" column="9" lean-forward="true" selection-start-line="92" selection-start-column="9" selection-end-line="92" selection-end-column="9" />
-              <folding>
-                <element signature="e#0#15#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <splitter split-orientation="horizontal" split-proportion="0.45149255">
+      <split-first>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/main.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="168">
+                  <caret line="161" column="8" lean-forward="false" selection-start-line="161" selection-start-column="8" selection-end-line="161" selection-end-column="8" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="prepro.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/squad/prepro.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-7755">
+                  <caret line="45" column="6" lean-forward="false" selection-start-line="45" selection-start-column="6" selection-end-line="45" selection-end-column="6" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="graph_handler.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/graph_handler.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="519">
+                  <caret line="52" column="19" lean-forward="false" selection-start-line="52" selection-start-column="19" selection-end-line="52" selection-end-column="19" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/model.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="417">
+                  <caret line="422" column="17" lean-forward="true" selection-start-line="422" selection-start-column="17" selection-end-line="422" selection-end-column="17" />
+                  <folding>
+                    <element signature="e#0#13#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="trainer.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/trainer.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="859">
+                  <caret line="68" column="8" lean-forward="false" selection-start-line="68" selection-start-column="8" selection-end-line="68" selection-end-column="8" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="general.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="292">
+                  <caret line="210" column="4" lean-forward="false" selection-start-line="210" selection-start-column="4" selection-end-line="210" selection-end-column="4" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="evaluator.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/basic/evaluator.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="460">
+                  <caret line="462" column="29" lean-forward="false" selection-start-line="462" selection-start-column="29" selection-end-line="462" selection-end-column="29" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="read_data.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/read_data.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="273">
+                  <caret line="245" column="33" lean-forward="true" selection-start-line="245" selection-start-column="33" selection-end-line="245" selection-end-column="33" />
+                  <folding>
+                    <element signature="e#0#11#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf>
+          <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/main.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="525">
+                  <caret line="169" column="46" lean-forward="false" selection-start-line="169" selection-start-column="46" selection-end-line="169" selection-end-column="46" />
+                  <folding>
+                    <element signature="e#0#15#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="evaluator.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/evaluator.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="279">
+                  <caret line="290" column="32" lean-forward="false" selection-start-line="290" selection-start-column="32" selection-end-line="290" selection-end-column="32" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/basic/model.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="7308">
+                  <caret line="431" column="35" lean-forward="false" selection-start-line="431" selection-start-column="33" selection-end-line="431" selection-end-column="35" />
+                  <folding>
+                    <element signature="e#0#13#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="general.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="42">
+                  <caret line="212" column="19" lean-forward="false" selection-start-line="212" selection-start-column="19" selection-end-line="212" selection-end-column="19" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="read_data.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/basic/read_data.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="525">
+                  <caret line="248" column="22" lean-forward="false" selection-start-line="248" selection-start-column="22" selection-end-line="248" selection-end-column="22" />
+                  <folding>
+                    <element signature="e#0#11#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-second>
+    </splitter>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>tf.add_collection(                &quot;summaries&quot;,                scope=self.scope            )</find>
-      <find>tf.add_collection(&quot;summaries&quot;,                scope=self.scope            )</find>
-      <find>tf.add_collection(&quot;summaries&quot;,</find>
-      <find>tf.add_collection(&quot;summaries&quot;,</find>
-      <find>tf.add_collection(&quot;summaries&quot;</find>
-      <find>tf.add_collection(&quot;summaries</find>
-      <find>tf.add_collection(&quot;summarie</find>
-      <find>tf.add_collection(&quot;summari</find>
-      <find>tf.add_collection(&quot;summar</find>
-      <find>tf.add_collection(&quot;summa</find>
       <find>tf.add_collection(&quot;summ</find>
       <find>tf.add_collection(&quot;sum</find>
       <find>tf.add_collection(&quot;su</find>
@@ -114,6 +251,16 @@
       <find>load_ema</find>
       <find>load_path</find>
       <find>global_step</find>
+      <find>self.yp</find>
+      <find>self.y</find>
+      <find>vis</find>
+      <find>self.wy</find>
+      <find>supervised</find>
+      <find>is_train</find>
+      <find>tensor_dict</find>
+      <find>get_evaluation_from_batches</find>
+      <find>self.tensor_dict</find>
+      <find>get_evaluation</find>
     </findStrings>
     <dirStrings>
       <dir>C:\Users\hanwe\Desktop\Project\Python\bi-att-flow\basic</dir>
@@ -147,13 +294,14 @@
         <option value="$PROJECT_DIR$/my/tensorflow/rnn_cell.py" />
         <option value="$PROJECT_DIR$/my/tensorflow/nn.py" />
         <option value="$PROJECT_DIR$/my/tensorflow/rnn.py" />
-        <option value="$PROJECT_DIR$/my/tensorflow/general.py" />
-        <option value="$PROJECT_DIR$/basic/model.py" />
-        <option value="$PROJECT_DIR$/basic/read_data.py" />
-        <option value="$PROJECT_DIR$/basic/main.py" />
         <option value="$PROJECT_DIR$/basic/cli.py" />
         <option value="$PROJECT_DIR$/basic/graph_handler.py" />
         <option value="$PROJECT_DIR$/basic/trainer.py" />
+        <option value="$PROJECT_DIR$/basic/model.py" />
+        <option value="$PROJECT_DIR$/basic/main.py" />
+        <option value="$PROJECT_DIR$/basic/evaluator.py" />
+        <option value="$PROJECT_DIR$/basic/read_data.py" />
+        <option value="$PROJECT_DIR$/my/tensorflow/general.py" />
       </list>
     </option>
   </component>
@@ -222,6 +370,20 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="tree" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bi-att-flow" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bi-att-flow" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="squad" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -527,7 +689,7 @@
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.12846482" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32419354" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.10181237" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="WINDOWED" visible="true" show_stripe_button="true" weight="0.2950644" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="-1366" y="23" width="1366" height="715" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21588486" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -584,18 +746,11 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="58" />
+      <option name="time" value="60" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/basic/ensemble_fast.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-273">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/basic/run_ensemble.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -777,14 +932,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/squad/prepro.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="294">
-          <caret line="45" column="6" lean-forward="false" selection-start-line="45" selection-start-column="6" selection-end-line="45" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharm2017.1/system/remote_sources/1860324320/-1417380504/tensorflow/python/ops/variable_scope.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-33456">
@@ -898,16 +1045,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="292">
-          <caret line="210" column="4" lean-forward="false" selection-start-line="210" selection-start-column="4" selection-end-line="210" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#33#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.PyCharm2017.1/system/remote_sources/1860324320/-1417380504/tensorflow/python/platform/flags.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="672">
@@ -916,66 +1053,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/basic/graph_handler.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="292">
-          <caret line="68" column="8" lean-forward="false" selection-start-line="68" selection-start-column="8" selection-end-line="68" selection-end-column="8" />
-          <folding>
-            <marker date="1496753681270" expanded="true" signature="1330:1552" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/trainer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="65" column="47" lean-forward="false" selection-start-line="65" selection-start-column="47" selection-end-line="65" selection-end-column="47" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="207">
-          <caret line="20" column="14" lean-forward="false" selection-start-line="20" selection-start-column="14" selection-end-line="20" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/evaluator.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="248">
-          <caret line="421" column="10" lean-forward="false" selection-start-line="421" selection-start-column="10" selection-end-line="421" selection-end-column="10" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/cli.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="193">
-          <caret line="35" column="2" lean-forward="false" selection-start-line="35" selection-start-column="2" selection-end-line="35" selection-end-column="2" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/basic/read_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="302">
-          <caret line="199" column="26" lean-forward="true" selection-start-line="199" selection-start-column="26" selection-end-line="199" selection-end-column="26" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/cnn_dm/evaluate.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-252">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#11#0" expanded="true" />
+            <element signature="e#0#11#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1004,13 +1087,89 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/basic/trainer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="859">
+          <caret line="68" column="8" lean-forward="false" selection-start-line="68" selection-start-column="8" selection-end-line="68" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/basic/cli.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="82" column="77" lean-forward="true" selection-start-line="82" selection-start-column="77" selection-end-line="82" selection-end-column="77" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/squad/prepro.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7755">
+          <caret line="45" column="6" lean-forward="false" selection-start-line="45" selection-start-column="6" selection-end-line="45" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/basic/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-525">
-          <caret line="92" column="9" lean-forward="true" selection-start-line="92" selection-start-column="9" selection-end-line="92" selection-end-column="9" />
+        <state relative-caret-position="168">
+          <caret line="161" column="8" lean-forward="false" selection-start-line="161" selection-start-column="8" selection-end-line="161" selection-end-column="8" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2017.1/system/remote_sources/1860324320/-1417380504/tqdm/_tqdm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="302">
+          <caret line="832" column="0" lean-forward="false" selection-start-line="832" selection-start-column="0" selection-end-line="832" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/basic/read_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="273">
+          <caret line="245" column="33" lean-forward="true" selection-start-line="245" selection-start-column="33" selection-end-line="245" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/my/tensorflow/general.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="292">
+          <caret line="210" column="4" lean-forward="false" selection-start-line="210" selection-start-column="4" selection-end-line="210" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/basic/model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="417">
+          <caret line="422" column="17" lean-forward="true" selection-start-line="422" selection-start-column="17" selection-end-line="422" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#13#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/basic/graph_handler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="519">
+          <caret line="52" column="19" lean-forward="false" selection-start-line="52" selection-start-column="19" selection-end-line="52" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/basic/evaluator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="460">
+          <caret line="462" column="29" lean-forward="false" selection-start-line="462" selection-start-column="29" selection-end-line="462" selection-end-column="29" />
+          <folding />
         </state>
       </provider>
     </entry>

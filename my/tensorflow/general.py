@@ -210,7 +210,7 @@ def add_wd(wd, scope=None):
 
 def grouper(iterable, n, fillvalue=None, shorten=False, num_groups=None):
     '''
-
+    将iterable中的内容分组
     :param iterable: 可迭代的对象
     :param n: 每组多少个元素
     :param fillvalue: 不能对其的元素的填充值
@@ -248,7 +248,20 @@ def grouper(iterable, n, fillvalue=None, shorten=False, num_groups=None):
     return out
 
 def padded_reshape(tensor, shape, mode='CONSTANT', name=None):
-    paddings = [[0, shape[i] - tf.shape(tensor)[i]] for i in range(len(shape))]
+    '''
+    padding添加的0在某个轴的数据后面
+    :param tensor: 要处理的tensor
+    :param shape: 要PADDING得到的tensor的shape
+    :param mode: PADDING的模式
+    :param name: scope
+    :return:tensor
+    '''
+    # 每个轴上要PADDING多少，padding添加的0在某个轴的数据后面
+    paddings = [
+        [
+            0, shape[i] - tf.shape(tensor)[i]
+        ] for i in range(len(shape))
+    ]
     return tf.pad(tensor, paddings, mode=mode, name=name)
 
 
