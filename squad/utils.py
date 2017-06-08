@@ -61,15 +61,17 @@ def get_word_span(context, wordss, start, stop):
 def get_phrase(context, wordss, span):
     """
     Obtain phrase as substring of context given start and stop indices in word level
-    :param context:
-    :param wordss:
+    :param context:str
+    :param wordss:[M,JX]
     :param start: [sent_idx, word_idx]
-    :param stop: [sent_idx, word_idx]
-    :return:
+    :param stop: [sent_idx, word_idx+1]
+    :return:span确定的词的位置对应于context中的一段字符串
     """
     start, stop = span
+    # 在[M*JX]中的词索引
     flat_start = get_flat_idx(wordss, start)
     flat_stop = get_flat_idx(wordss, stop)
+    # words:把wordss拼接起来[M*JX]
     words = sum(wordss, [])
     char_idx = 0
     char_start, char_stop = None, None
@@ -87,7 +89,16 @@ def get_phrase(context, wordss, span):
 
 
 def get_flat_idx(wordss, idx):
-    return sum(len(words) for words in wordss[:idx[0]]) + idx[1]
+    '''
+    获得idx在[M*JX]中的索引
+    :param wordss:[M,JX]
+    :param idx:[sent_idx, word_idx]
+    :return:索引
+    '''
+    return sum(
+        len(words)
+        for words in wordss[:idx[0]]
+    ) + idx[1]
 
 
 def get_word_idx(context, wordss, idx):
@@ -121,12 +132,27 @@ def process_tokens(temp_tokens):
 
 
 def get_best_span(ypi, yp2i):
+    '''
+    选择M句话中，使论文里p_k^1 p_l^2最大的一个范围，不跨句子进行选取
+    :param ypi:[M,JX]
+    :param yp2i: [M,JX]
+    :return:
+     (
+        (答案开始句子索引，答案开始词索引),
+        (答案结束句子索引，答案结束词索引+1)
+     ),
+        某一个区域作为答案的概率
+    '''
     max_val = 0
     best_word_span = (0, 1)
     best_sent_idx = 0
+    # 不跨句子选取答案
+    # 对每一句
     for f, (ypif, yp2if) in enumerate(zip(ypi, yp2i)):
         argmax_j1 = 0
+        # 对每一个词
         for j in range(len(ypif)):
+            # 寻找ypif最大的激活词
             val1 = ypif[argmax_j1]
             if val1 < ypif[j]:
                 val1 = ypif[j]
@@ -137,7 +163,11 @@ def get_best_span(ypi, yp2i):
                 best_word_span = (argmax_j1, j)
                 best_sent_idx = f
                 max_val = val1 * val2
-    return ((best_sent_idx, best_word_span[0]), (best_sent_idx, best_word_span[1] + 1)), float(max_val)
+    return (
+               (best_sent_idx, best_word_span[0]),
+               (best_sent_idx, best_word_span[1] + 1)
+           ), \
+           float(max_val)
 
 
 def get_best_span_wy(wypi, th):
@@ -145,7 +175,14 @@ def get_best_span_wy(wypi, th):
     使用sigmoid进行二分类来确定答案的范围，超过th的区域作为答案，如果能找到多个范围，选择平均激活值最大的范围作为答案，不跨句子选取答案（详情见下面的注释）
     :param wypi: [M,JX]
     :param th:Threshold
-    :return:((答案开始句子索引，答案开始词索引),(答案结束句子索引，答案结束词索引+1),平均激活值)
+    :return:
+    (
+        (
+            (答案开始句子索引，答案开始词索引),
+            (答案结束句子索引，答案结束词索引+1)
+        ),
+        平均激活值
+    )
     '''
     # chunk_spans:
     # [

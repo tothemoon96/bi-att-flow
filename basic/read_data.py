@@ -96,6 +96,7 @@ class DataSet(object):
         num_batches_per_epoch = int(math.ceil(self.num_examples / batch_size))
         if num_batches is None:
             num_batches = num_batches_per_epoch
+        # 整个数据集训练多少个epochs
         num_epochs = int(math.ceil(num_batches / num_batches_per_epoch))
 
         if shuffle:
@@ -119,7 +120,7 @@ class DataSet(object):
             raw_grouped = lambda: list(grouper(self.valid_idxs, batch_size))
             grouped = raw_grouped
 
-        # grouped()=>[[（每个batch内的样本）],...（不同的batch）]
+        # grouped()=>[[（每个batch内的样本）],...（不同的batch，一共有num_batches_per_epoch）]
         batch_idx_tuples = itertools.chain.from_iterable(
             grouped() for _ in range(num_epochs)
         )
@@ -179,10 +180,14 @@ class DataSet(object):
         返回的元组中每个元素都是一个get_batches的生成器
         :param batch_size:
         :param num_batches_per_step: 每个step有几个batch
-        :param num_steps:
+        :param num_steps:一共训练多少个step
         :param shuffle:
         :param cluster:
-        :return:(get_batches的生成器,...（num_batches_per_step个这样的生成器）)
+        :return:
+        (（num_steps个下面的元组）
+          (([样本点的索引],DataSet),...)->一共num_batches_per_step（GPU的个数）个这样的tuple
+          ...
+        )
         '''
         batch_size_per_step = batch_size * num_batches_per_step
         batches = self.get_batches(
@@ -192,7 +197,10 @@ class DataSet(object):
             cluster=cluster
         )
         # 把batches按照顺序拆分成num_batches_per_step组小batch
-        # (get_batches的生成器,...（num_batches_per_step个这样的生成器）)
+        # (（num_steps个下面的元组）
+        #   (([样本点的索引],DataSet),...)->一共num_batches_per_step个这样的tuple
+        #   ...
+        # )
         multi_batches = (
             tuple(
                 zip(

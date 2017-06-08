@@ -236,16 +236,46 @@ class ForwardEvaluation(Evaluation):
 
 
 class F1Evaluation(AccuracyEvaluation):
-    def __init__(self, data_type, global_step, idxs, yp, yp2, y, correct, loss, f1s, id2answer_dict, tensor_dict=None):
-        super(F1Evaluation, self).__init__(data_type, global_step, idxs, yp, y, correct, loss, tensor_dict=tensor_dict)
+    def __init__(
+            self,
+            data_type,
+            global_step,
+            idxs,
+            yp,
+            yp2,
+            y,
+            correct,
+            loss,
+            f1s,
+            id2answer_dict,
+            tensor_dict=None
+    ):
+        super(F1Evaluation, self).__init__(
+            data_type,
+            global_step,
+            idxs,
+            yp,
+            y,
+            correct,
+            loss,
+            tensor_dict=tensor_dict
+        )
         self.yp2 = yp2
         self.f1s = f1s
+        # 计算一组batch的f1值
         self.f1 = float(np.mean(f1s))
         self.dict['yp2'] = yp2
         self.dict['f1s'] = f1s
         self.dict['f1'] = self.f1
         self.id2answer_dict = id2answer_dict
-        f1_summary = tf.Summary(value=[tf.Summary.Value(tag='{}/f1'.format(data_type), simple_value=self.f1)])
+        f1_summary = tf.Summary(
+            value=[
+                tf.Summary.Value(
+                    tag='{}/f1'.format(data_type),
+                    simple_value=self.f1
+                )
+            ]
+        )
         self.summaries.append(f1_summary)
 
     def __add__(self, other):
@@ -308,6 +338,12 @@ class F1Evaluator(LabeledEvaluator):
             self.na = model.na_prob
 
     def get_evaluation(self, sess, batch):
+        '''
+        计算一组batch的完全匹配和F1值
+        :param sess:
+        :param batch: 多个gpu上的batch
+        :return: F1Evaluation对象
+        '''
         idxs, data_set = self._split_batch(batch)
         assert isinstance(data_set, DataSet)
         feed_dict = self._get_feed_dict(batch)
@@ -392,17 +428,13 @@ class F1Evaluator(LabeledEvaluator):
                 new_y.append(new_yi)
             y = new_y
 
-        # 此时的y:
-        # [（每一个样本->每个问题）
-        #   [（每个备选答案）
-        #       [答案起始位置词索引，答案终止位置词索引]
-        #   ]
-        # ]
         yp, yp2, wyp = yp[:data_set.num_examples], \
                        yp2[:data_set.num_examples], \
                        wyp[:data_set.num_examples]
         if self.config.wy:
             # wyp:[N,M,JX]
+            # spans:[N,2,2]
+            # scores:[N]
             spans, scores = zip(
                 *[
                     get_best_span_wy(
@@ -413,6 +445,8 @@ class F1Evaluator(LabeledEvaluator):
                 ]
             )
         else:
+            # spans:[N,2,2]
+            # scores:[N]
             spans, scores = zip(
                 *[
                     get_best_span(
@@ -433,20 +467,27 @@ class F1Evaluator(LabeledEvaluator):
         def _get2(context, xi, span):
             if len(xi) <= span[0][0]:
                 return ""
+            # 答案起始位置和终止位置都在同一句
             if len(xi[span[0][0]]) <= span[1][1]:
                 return ""
             return get_phrase(context, xi, span)
 
+        # {问题id:答案str}
         id2answer_dict = {
             id_: _get2(context, xi, span)
             for id_, xi, span, context in
             zip(
+                # [N]
                 data_set.data['ids'],
+                # [N,M,JX]
                 data_set.data['x'],
+                # [N,2,2]
                 spans,
+                # [N]
                 data_set.data['p']
             )
         }
+        # {问题id:答案的生成概率}
         id2score_dict = {
             id_: score
             for id_, score in
@@ -457,6 +498,7 @@ class F1Evaluator(LabeledEvaluator):
         }
         id2answer_dict['scores'] = id2score_dict
         if self.config.na:
+            # {问题id：没有答案的概率}
             id2na_dict = {
                 id_: float(each)
                 for id_, each in
@@ -466,14 +508,19 @@ class F1Evaluator(LabeledEvaluator):
                 )
             }
             id2answer_dict['na'] = id2na_dict
+        # 模型预测的span和标注yi的span完全一致
+        # [N](True或者False)
         correct = [
             self.__class__.compare2(yi, span)
             for yi, span in zip(y, spans)
         ]
+        # 计算F1值
+        # [N]
         f1s = [
             self.__class__.span_f1(yi, span)
             for yi, span in zip(y, spans)
         ]
+        # 得到tensor_dict的值的字典
         tensor_dict = dict(
             zip(
                 self.tensor_dict.keys(),
@@ -515,6 +562,12 @@ class F1Evaluator(LabeledEvaluator):
 
     @staticmethod
     def compare2(yi, span):
+        '''
+        检查span和yi中的内容是否一致
+        :param yi:[备选答案数目，2,2]
+        :param span:[2,2]
+        :return:完全一致返回True
+        '''
         for start, stop in yi:
             if tuple(start) == span[0] and tuple(stop) == span[1]:
                 return True
@@ -522,8 +575,15 @@ class F1Evaluator(LabeledEvaluator):
 
     @staticmethod
     def span_f1(yi, span):
+        '''
+        假设在答案在同一句话中，返回几个备选答案中最大的F1值
+        :param yi:标注[备选答案数目,2,2]
+        :param span:预测[2,2]
+        :return:
+        '''
         max_f1 = 0
         for start, stop in yi:
+            # 标注的答案开始位置的句号和预测的答案开始位置的序号相同
             if start[0] == span[0][0]:
                 true_span = start[1], stop[1]
                 pred_span = span[0][1], span[1][1]
