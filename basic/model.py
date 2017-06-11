@@ -899,6 +899,7 @@ class Model(object):
                 for each in (word, word.lower(), word.capitalize(), word.upper()):
                     if each in d2:
                         return d2[each] + len(d)
+            # 如果在两个字典中都没有找到，认为该词是UNK词
             return 1
 
         def _get_char(char):
