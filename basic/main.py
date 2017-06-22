@@ -103,7 +103,6 @@ def _train(config):
     print("num params: {}".format(get_num_params()))
 
     trainer = MultiGPUTrainer(config, models)
-    # todo:暂时先不看这里
     evaluator = MultiGPUF1Evaluator(
         config,
         models,

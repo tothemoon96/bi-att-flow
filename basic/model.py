@@ -107,6 +107,7 @@ class Model(object):
 
         # 默认merge到"summaries"中去了
         self.summary = tf.summary.merge_all()
+        # 得到某个gpu上的模型的summary
         self.summary = tf.summary.merge(
             tf.get_collection(
                 "summaries",
